@@ -44,6 +44,7 @@ dependencies:
   flutter_local_notifications: ^18.0.1
   flutter_launcher_icons: ^0.14.2
   timezone: ^0.10.0
+  workmanager: ^0.5.2
 
 
 

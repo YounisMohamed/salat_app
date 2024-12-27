@@ -1,11 +1,14 @@
 import 'package:awqatalsalah/response.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:workmanager/workmanager.dart';
 
 import 'LocationPickerScreen.dart';
+import 'Services/notification_service.dart';
 import 'api.dart';
 
 class MainPage extends StatefulWidget {
@@ -17,21 +20,147 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   late Future<void> _prayerTimesFuture;
+  late SharedPreferences _prefs;
+
+  final List<String> prayerNamesForNotifications = [
+    "Fajr",
+    "Shuruq",
+    "Dhuhr",
+    "Asr",
+    "Maghrib",
+    "Isha",
+  ];
+
+  Map<String, bool> notificationPreferences = {};
 
   @override
   void initState() {
     super.initState();
-    _prayerTimesFuture = fetchPrayerTimes();
+    _initNotificationsPreferences();
+    _prayerTimesFuture = fetchPrayerTimes().then((_) {
+      registerPrayerNotificationTask();
+    });
   }
 
-  final List<Map<String, bool>> notifications = [
-    {"notification": true},
-    {"notification": false},
-    {"notification": true},
-    {"notification": true},
-    {"notification": true},
-    {"notification": true},
-  ];
+  Future<void> _initNotificationsPreferences() async {
+    _prefs = await SharedPreferences.getInstance();
+
+    // Load notification preferences
+    setState(() {
+      notificationPreferences = {
+        for (var prayer in prayerNamesForNotifications)
+          prayer: _prefs.getBool('notification_$prayer') ?? true
+      };
+    });
+  }
+
+  void _toggleNotification(String prayer) async {
+    setState(() {
+      notificationPreferences[prayer] = !notificationPreferences[prayer]!;
+    });
+
+    // Save the updated preference
+    await _prefs.setBool(
+        'notification_$prayer', notificationPreferences[prayer]!);
+    await fetchPrayerTimesAndScheduleNotifications();
+  }
+
+  Future<void> fetchPrayerTimesAndScheduleNotifications() async {
+    await NotificationService.notificationsPlugin.cancelAll();
+    print("All scheduled notifications cleared.");
+    await fetchPrayerTimes();
+
+    if (_prayerData != null) {
+      final Map<String, String> prayerTimes = {
+        "Fajr": _prayerData!.timings.fajr,
+        "Shuruq": _prayerData!.timings.sunrise,
+        "Dhuhr": _prayerData!.timings.dhuhr,
+        "Asr": _prayerData!.timings.asr,
+        "Maghrib": _prayerData!.timings.maghrib,
+        "Isha": _prayerData!.timings.isha,
+      };
+      // TODO : FIX THE FUCKING BUG, ONLY THE LAST NOTIFICATION IS BEING FIRED!!!
+      for (int i = 0; i < prayerTimes.length; i++) {
+        String prayerName = prayerTimes.keys.toList()[i];
+        String? prayerTime = prayerTimes[prayerName];
+        if (!notificationPreferences[prayerName]!) continue;
+        try {
+          final DateTime now = DateTime.now();
+
+          // Parse the prayer time into a DateTime object
+          final DateTime parsedTime = DateFormat("HH:mm").parse(prayerTime!);
+          DateTime scheduledTime = DateTime(
+            now.year,
+            now.month,
+            now.day,
+            parsedTime.hour,
+            parsedTime.minute,
+          );
+
+          // If the prayer time has already passed for today, schedule for the next day (EDGE CASE FOR FAJR)
+          if (scheduledTime.isBefore(now)) {
+            scheduledTime = DateTime(
+              now.year,
+              now.month,
+              now.day + 1,
+              parsedTime.hour,
+              parsedTime.minute,
+            );
+          }
+          // for testing purposes
+
+          String hour = parsedTime.hour < 9
+              ? "0" + parsedTime.hour.toString()
+              : parsedTime.hour.toString();
+          String minute = parsedTime.minute < 9
+              ? "0" + parsedTime.minute.toString()
+              : parsedTime.minute.toString();
+
+          await NotificationService.scheduleNotification(
+            id: prayerName.hashCode,
+            title: "Prayer Time: $prayerName",
+            body: "($hour:$minute) It's time for $prayerName prayer.",
+            scheduledTime: scheduledTime,
+          );
+
+          print("scheduled time ${scheduledTime} for prayer ${prayerName}");
+        } catch (e) {
+          print("Error scheduling notification for $prayerName: $e");
+        }
+      }
+      List<PendingNotificationRequest> active = await NotificationService
+          .notificationsPlugin
+          .pendingNotificationRequests();
+      for (int i = 0; i < active.length; i++) {
+        print("Active ${i + 1} is ${active[i].body}");
+      }
+    } else {
+      print("error");
+    }
+  }
+
+  void registerPrayerNotificationTask() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final Map<String, String> prayerTimes = {
+      "Fajr": prefs.getString("fajr") ?? "",
+      "Dhuhr": prefs.getString("dhuhr") ?? "",
+      "Asr": prefs.getString("asr") ?? "",
+      "Maghrib": prefs.getString("maghrib") ?? "",
+      "Isha": prefs.getString("isha") ?? "",
+    };
+
+    Workmanager().registerPeriodicTask(
+      "dailyPrayerNotifications", // Unique task name
+      "schedulePrayerNotifications", // Callback function name
+      inputData: prayerTimes, // Pass prayer times
+      frequency: const Duration(hours: 12), // Run daily
+    );
+    await fetchPrayerTimesAndScheduleNotifications();
+  }
+
+  String lat = "";
+  String lon = "";
+  bool latlonSet = false;
 
   Future<void> setLatLon() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -97,6 +226,7 @@ class _MainPageState extends State<MainPage> {
     await setLatLon();
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final now = DateTime.now();
+    print(notificationPreferences);
 
     // Check if 24 hours have passed since the last update
     final lastUpdatedTimestamp = prefs.getInt('lastUpdated') ?? 0;
@@ -149,13 +279,14 @@ class _MainPageState extends State<MainPage> {
     }
 
     // Convert times to hh:mm AM/PM
-    String formatTime(String time) {
+    String formatTime(String? time) {
+      if (time == null) return 'N/A';
       try {
         final parsedTime = DateFormat("HH:mm").parse(time);
         return DateFormat("hh:mm a").format(parsedTime);
       } catch (e) {
         print('Error formatting time $time: $e');
-        return 'ERROR';
+        return 'Invalid Time';
       }
     }
 
@@ -168,10 +299,6 @@ class _MainPageState extends State<MainPage> {
       {'name': 'Isha', 'time': formatTime(_prayerData!.timings.isha)},
     ];
   }
-
-  String lat = "";
-  String lon = "";
-  bool latlonSet = false;
 
   @override
   @override
@@ -247,7 +374,6 @@ class _MainPageState extends State<MainPage> {
                     separatorBuilder: (context, index) => const Divider(),
                     itemBuilder: (context, index) {
                       final prayer = prayerTimes[index];
-                      final notificationMap = notifications[index];
                       final nextPrayerDetails = calculateNextPrayer();
                       final nextPrayerName =
                           nextPrayerDetails["nextPrayerName"];
@@ -280,13 +406,12 @@ class _MainPageState extends State<MainPage> {
                             ),
                             const SizedBox(width: 16),
                             IconButton(
-                              onPressed: () {
+                              onPressed: () async {
                                 setState(() {
-                                  notificationMap['notification'] =
-                                      !notificationMap['notification']!;
+                                  _toggleNotification(prayer['name']!);
                                 });
                               },
-                              icon: notificationMap['notification']!
+                              icon: notificationPreferences[prayer['name']!]!
                                   ? const Icon(Icons.notifications_active)
                                   : const Icon(Icons.notifications_none),
                             ),
@@ -405,7 +530,7 @@ class _MainPageState extends State<MainPage> {
                         minimumSize: const Size.fromHeight(40),
                       ),
                       child: const Text(
-                        "Send notification",
+                        "Choose Reciter",
                         style: TextStyle(
                           fontSize: 16,
                           color: Colors.black87,

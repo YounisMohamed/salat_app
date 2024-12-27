@@ -33,20 +33,29 @@ class NotificationService {
     await notificationsPlugin.show(0, title, body, platformChannelSpecifies);
   }
 
-  static Future<void> showScheduleNotification(
-      {required id,
+  static Future<void> scheduleNotification(
+      {required int id,
       required String title,
       required String body,
       required DateTime scheduledTime}) async {
-    const NotificationDetails platformChannelSpecifies = NotificationDetails(
-        android: AndroidNotificationDetails("channel_Id", "channel_Name",
-            importance: Importance.high, priority: Priority.high),
-        iOS: DarwinNotificationDetails());
-    await notificationsPlugin.zonedSchedule(0, title, body,
-        tz.TZDateTime.from(scheduledTime, tz.local), platformChannelSpecifies,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        matchDateTimeComponents: DateTimeComponents.dateAndTime);
+    await notificationsPlugin.zonedSchedule(
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      id,
+      title,
+      body,
+      tz.TZDateTime.from(scheduledTime, tz.local),
+      const NotificationDetails(
+        iOS: DarwinNotificationDetails(),
+        android: AndroidNotificationDetails(
+          'reminder_channel',
+          'Reminder Channel',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+      ),
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.dateAndTime,
+    );
   }
 }
