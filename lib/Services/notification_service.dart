@@ -1,13 +1,14 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin notificationsPlugin =
       FlutterLocalNotificationsPlugin();
   static Future<void> onReceiveNoti(NotificationResponse notResponse) async {}
   static Future<void> init() async {
-    // @mipmap/prayerpngicon.png
+    //
     const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings("prayerpngicon.png");
+        AndroidInitializationSettings("@mipmap/launcher_icon");
     const DarwinInitializationSettings iOSSettings =
         DarwinInitializationSettings();
     const InitializationSettings initSettings =
@@ -24,6 +25,28 @@ class NotificationService {
         ?.requestNotificationsPermission();
   }
 
-  static Future<void> showInstantNotification(
-      String title, String Body) async {}
+  static Future<void> showInstantNotification(String title, String body) async {
+    const NotificationDetails platformChannelSpecifies = NotificationDetails(
+        android: AndroidNotificationDetails("channel_Id", "channel_Name",
+            importance: Importance.high, priority: Priority.high),
+        iOS: DarwinNotificationDetails());
+    await notificationsPlugin.show(0, title, body, platformChannelSpecifies);
+  }
+
+  static Future<void> showScheduleNotification(
+      {required id,
+      required String title,
+      required String body,
+      required DateTime scheduledTime}) async {
+    const NotificationDetails platformChannelSpecifies = NotificationDetails(
+        android: AndroidNotificationDetails("channel_Id", "channel_Name",
+            importance: Importance.high, priority: Priority.high),
+        iOS: DarwinNotificationDetails());
+    await notificationsPlugin.zonedSchedule(0, title, body,
+        tz.TZDateTime.from(scheduledTime, tz.local), platformChannelSpecifies,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.dateAndTime);
+  }
 }

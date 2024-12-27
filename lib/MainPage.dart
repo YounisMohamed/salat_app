@@ -400,12 +400,12 @@ class _MainPageState extends State<MainPage> {
                     ),
                     const SizedBox(height: 8),
                     ElevatedButton(
-                      onPressed: () { },
+                      onPressed: () {},
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size.fromHeight(40),
                       ),
                       child: const Text(
-                        "Choose Reciter",
+                        "Send notification",
                         style: TextStyle(
                           fontSize: 16,
                           color: Colors.black87,
