@@ -25,14 +25,6 @@ class NotificationService {
         ?.requestNotificationsPermission();
   }
 
-  static Future<void> showInstantNotification(String title, String body) async {
-    const NotificationDetails platformChannelSpecifies = NotificationDetails(
-        android: AndroidNotificationDetails("channel_Id", "channel_Name",
-            importance: Importance.high, priority: Priority.high),
-        iOS: DarwinNotificationDetails());
-    await notificationsPlugin.show(0, title, body, platformChannelSpecifies);
-  }
-
   static Future<void> scheduleNotification(
       {required int id,
       required String title,

@@ -4,11 +4,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:workmanager/workmanager.dart';
 
 import 'LocationPickerScreen.dart';
 import 'Services/notification_service.dart';
+import 'Services/provider.dart';
 import 'api.dart';
 
 class MainPage extends StatefulWidget {
@@ -38,7 +39,7 @@ class _MainPageState extends State<MainPage> {
     super.initState();
     _initNotificationsPreferences();
     _prayerTimesFuture = fetchPrayerTimes().then((_) {
-      registerPrayerNotificationTask();
+      fetchPrayerTimesAndScheduleNotifications();
     });
   }
 
@@ -79,7 +80,6 @@ class _MainPageState extends State<MainPage> {
         "Maghrib": _prayerData!.timings.maghrib,
         "Isha": _prayerData!.timings.isha,
       };
-      // TODO : FIX THE FUCKING BUG, ONLY THE LAST NOTIFICATION IS BEING FIRED!!!
       for (int i = 0; i < prayerTimes.length; i++) {
         String prayerName = prayerTimes.keys.toList()[i];
         String? prayerTime = prayerTimes[prayerName];
@@ -137,25 +137,6 @@ class _MainPageState extends State<MainPage> {
     } else {
       print("error");
     }
-  }
-
-  void registerPrayerNotificationTask() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final Map<String, String> prayerTimes = {
-      "Fajr": prefs.getString("fajr") ?? "",
-      "Dhuhr": prefs.getString("dhuhr") ?? "",
-      "Asr": prefs.getString("asr") ?? "",
-      "Maghrib": prefs.getString("maghrib") ?? "",
-      "Isha": prefs.getString("isha") ?? "",
-    };
-
-    Workmanager().registerPeriodicTask(
-      "dailyPrayerNotifications", // Unique task name
-      "schedulePrayerNotifications", // Callback function name
-      inputData: prayerTimes, // Pass prayer times
-      frequency: const Duration(hours: 12), // Run daily
-    );
-    await fetchPrayerTimesAndScheduleNotifications();
   }
 
   String lat = "";
@@ -301,11 +282,21 @@ class _MainPageState extends State<MainPage> {
   }
 
   @override
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFEFF5EB), // Light green background
       appBar: AppBar(
-        title: const Text("Prayer Times"),
+        elevation: 0,
+        backgroundColor: const Color(0xFF128C7E),
+        // Deep green
+        title: Text(
+          "Prayer Times (Younis)",
+          style: GoogleFonts.notoNaskhArabic(
+            fontSize: 21,
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         centerTitle: true,
         leading: IconButton(
           onPressed: () async {
@@ -313,16 +304,19 @@ class _MainPageState extends State<MainPage> {
             setState(() {
               _prayerTimesFuture = fetchPrayerTimes(forceRefresh: true);
             });
-            HapticFeedback.lightImpact(); // Optional: Provide haptic feedback
+            HapticFeedback.lightImpact();
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Prayer Times Refreshed'),
-                duration:
-                    Duration(milliseconds: 1000), // Adjust duration as needed
+              SnackBar(
+                content: Text(
+                  'Prayer Times Refreshed',
+                  style: GoogleFonts.notoNaskhArabic(),
+                ),
+                backgroundColor: const Color(0xFF128C7E),
+                duration: const Duration(milliseconds: 1000),
               ),
             );
           },
-          icon: const Icon(Icons.refresh),
+          icon: const Icon(Icons.refresh, color: Colors.white),
         ),
       ),
       body: SafeArea(
@@ -330,7 +324,11 @@ class _MainPageState extends State<MainPage> {
           future: _prayerTimesFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(
+                child: CircularProgressIndicator(
+                  color: Color(0xFF128C7E),
+                ),
+              );
             }
 
             if (_prayerData == null) {
@@ -339,24 +337,45 @@ class _MainPageState extends State<MainPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Text("Set Your Location Fisrt: "),
+                    Text(
+                      "Set Your Location First",
+                      style: GoogleFonts.notoNaskhArabic(
+                        fontSize: 20,
+                        color: const Color(0xFF128C7E),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                              builder: (context) =>
-                                  const LocationPickerScreen()),
+                            builder: (context) => const LocationPickerScreen(),
+                          ),
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(40),
-                      ),
-                      child: const Text(
-                        "Press Here to Locate ❌",
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.red,
+                        backgroundColor: const Color(0xFF128C7E),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 16,
                         ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.location_on, color: Colors.white),
+                          const SizedBox(width: 8),
+                          Text(
+                            "Set Location",
+                            style: GoogleFonts.notoNaskhArabic(
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -367,63 +386,118 @@ class _MainPageState extends State<MainPage> {
             return Column(
               children: [
                 Flexible(
-                  flex:
-                      3, // Adjust the flex to control the upper section height
-                  child: ListView.separated(
-                    itemCount: prayerTimes.length,
-                    separatorBuilder: (context, index) => const Divider(),
-                    itemBuilder: (context, index) {
-                      final prayer = prayerTimes[index];
-                      final nextPrayerDetails = calculateNextPrayer();
-                      final nextPrayerName =
-                          nextPrayerDetails["nextPrayerName"];
-                      bool isHighlighted = prayer['name'] == nextPrayerName;
-
-                      return ListTile(
-                        title: Text(
-                          prayer['name']!,
-                          style: TextStyle(
-                            fontWeight: isHighlighted
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                            fontSize: isHighlighted ? 18 : 16,
-                            color: isHighlighted ? Colors.teal : Colors.black,
-                          ),
+                  flex: 3,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          spreadRadius: 1,
+                          blurRadius: 10,
                         ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              prayer['time']!,
-                              style: TextStyle(
+                      ],
+                    ),
+                    child: ListView.separated(
+                      itemCount: prayerTimes.length,
+                      separatorBuilder: (context, index) => Divider(
+                        color: const Color(0xFF128C7E).withOpacity(0.1),
+                        height: 1,
+                      ),
+                      itemBuilder: (context, index) {
+                        final prayer = prayerTimes[index];
+                        final nextPrayerDetails = calculateNextPrayer();
+                        final nextPrayerName =
+                            nextPrayerDetails["nextPrayerName"];
+                        bool isHighlighted = prayer['name'] == nextPrayerName;
+
+                        return Container(
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isHighlighted
+                                ? const Color(0xFF128C7E).withOpacity(0.05)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                            ),
+                            leading: Container(
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: isHighlighted
+                                    ? const Color(0xFF128C7E)
+                                    : const Color(0xFF128C7E).withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                _getPrayerIcon(prayer['name']!),
+                                color: isHighlighted
+                                    ? Colors.white
+                                    : const Color(0xFF128C7E),
+                                size: 24,
+                              ),
+                            ),
+                            title: Text(
+                              prayer['name']!,
+                              style: GoogleFonts.notoNaskhArabic(
                                 fontWeight: isHighlighted
                                     ? FontWeight.bold
                                     : FontWeight.normal,
                                 fontSize: isHighlighted ? 18 : 16,
-                                color:
-                                    isHighlighted ? Colors.teal : Colors.black,
+                                color: isHighlighted
+                                    ? const Color(0xFF128C7E)
+                                    : Colors.black87,
                               ),
                             ),
-                            const SizedBox(width: 16),
-                            IconButton(
-                              onPressed: () async {
-                                setState(() {
-                                  _toggleNotification(prayer['name']!);
-                                });
-                              },
-                              icon: notificationPreferences[prayer['name']!]!
-                                  ? const Icon(Icons.notifications_active)
-                                  : const Icon(Icons.notifications_none),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  prayer['time']!,
+                                  style: GoogleFonts.notoNaskhArabic(
+                                    fontWeight: isHighlighted
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                    fontSize: isHighlighted ? 18 : 16,
+                                    color: isHighlighted
+                                        ? const Color(0xFF128C7E)
+                                        : Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _toggleNotification(prayer['name']!);
+                                    });
+                                  },
+                                  icon: Icon(
+                                    notificationPreferences[prayer['name']!]!
+                                        ? Icons.notifications_active
+                                        : Icons.notifications_none,
+                                    color: notificationPreferences[
+                                            prayer['name']!]!
+                                        ? const Color(0xFF128C7E)
+                                        : Colors.grey,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      );
-                    },
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
                 Flexible(
-                  flex: 2, // Adjust flex for bottom section as needed
-                  child: _bottomSection(),
+                  flex: 2,
+                  child: _buildBottomSection(context),
                 ),
               ],
             );
@@ -433,20 +507,39 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
-  Widget _bottomSection() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
+  Widget _buildBottomSection(BuildContext context) {
+    final reciterProvider = Provider.of<ReciterProvider>(context);
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+      ),
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.teal.withOpacity(0.1),
-              borderRadius: const BorderRadius.all(Radius.circular(20)),
+              gradient: LinearGradient(
+                colors: [Colors.green, Colors.greenAccent],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.2),
+                  spreadRadius: 2,
+                  blurRadius: 15,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: StreamBuilder<DateTime>(
               stream: Stream.periodic(
-                  const Duration(seconds: 1), (_) => DateTime.now()),
+                const Duration(seconds: 1),
+                (_) => DateTime.now(),
+              ),
               builder: (context, snapshot) {
                 final nextPrayerDetails = calculateNextPrayer();
                 final nextPrayerName = nextPrayerDetails["nextPrayerName"];
@@ -459,82 +552,55 @@ class _MainPageState extends State<MainPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Current Time: $currentTime",
-                      style: const TextStyle(
-                        fontSize: 18,
+                      currentTime,
+                      style: GoogleFonts.notoNaskhArabic(
+                        fontSize: 21,
                         fontWeight: FontWeight.bold,
-                        color: Colors.teal,
+                        color: Colors.white70,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     RichText(
                       text: TextSpan(
                         children: [
                           TextSpan(
                             text: "Next Prayer: ",
-                            style: GoogleFonts.poppins(
-                              fontSize: 20,
-                              color: Colors.black,
+                            style: GoogleFonts.nunito(
+                              fontSize: 18,
+                              color: Colors.black54,
                             ),
                           ),
                           TextSpan(
                             text: nextPrayerName ?? 'None',
-                            style: GoogleFonts.poppins(
-                              fontSize: 21,
-                              color: Colors.brown,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          TextSpan(
-                            text: "\nTime Left: ",
-                            style: GoogleFonts.poppins(
+                            style: GoogleFonts.nunito(
                               fontSize: 20,
                               color: Colors.black,
-                            ),
-                          ),
-                          TextSpan(
-                            text: timeUntilNextPrayer,
-                            style: GoogleFonts.poppins(
-                              fontSize: 21,
-                              color: Colors.teal,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 15),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  const LocationPickerScreen()),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(40),
-                      ),
-                      child: Text(
-                        latlonSet ? "Location Located ✅" : "Locate Me ❌",
-                        style: TextStyle(
-                          fontSize: latlonSet ? 14 : 16,
-                          color: latlonSet ? Colors.green : Colors.red,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(40),
-                      ),
-                      child: const Text(
-                        "Choose Reciter",
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.black87,
-                        ),
+                    const SizedBox(height: 4),
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: "Time Until: ",
+                            style: GoogleFonts.nunito(
+                              fontSize: 18,
+                              color: Colors.black54,
+                            ),
+                          ),
+                          TextSpan(
+                            text: timeUntilNextPrayer,
+                            style: GoogleFonts.nunito(
+                              fontSize: 20,
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -542,9 +608,225 @@ class _MainPageState extends State<MainPage> {
               },
             ),
           ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Colors.green, Colors.greenAccent],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.2),
+                        spreadRadius: 2,
+                        blurRadius: 15,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors
+                        .transparent, // Makes the Material widget transparent
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const LocationPickerScreen(),
+                          ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        alignment: Alignment.center,
+                        child: const Icon(
+                          Icons.settings,
+                          size: 20,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Colors.green, Colors.greenAccent],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.2),
+                        spreadRadius: 2,
+                        blurRadius: 15,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () async {
+                        await _showReciterDialog(context, reciterProvider);
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        alignment: Alignment.center,
+                        child: Text(
+                          reciterProvider.selectedReciterName,
+                          style: GoogleFonts.nunito(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                            height: 1,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _showReciterDialog(
+      BuildContext context, ReciterProvider reciterProvider) async {
+    final theme = Theme.of(context);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          title: Column(
+            children: [
+              Icon(
+                Icons.mic_rounded,
+                size: 40,
+                color: theme.primaryColor.withOpacity(0.8),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                "Select a Reciter",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: theme.primaryColor,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Container(
+                height: 2,
+                width: 60,
+                decoration: BoxDecoration(
+                  color: theme.primaryColor.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(1),
+                ),
+              ),
+            ],
+          ),
+          content: Container(
+            width: double.maxFinite,
+            constraints: const BoxConstraints(maxHeight: 400),
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: reciterProvider.reciters.length,
+              itemBuilder: (context, index) {
+                final entry = reciterProvider.reciters.entries.elementAt(index);
+                return Container(
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
+                    leading: CircleAvatar(
+                      backgroundColor: theme.primaryColor.withOpacity(0.1),
+                      child: Text(
+                        "${entry.key}",
+                        style: TextStyle(
+                          color: theme.primaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    title: Text(
+                      entry.value,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    onTap: () async {
+                      await reciterProvider.setReciter(entry.key);
+                      Navigator.of(context).pop();
+                    },
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    hoverColor: theme.primaryColor.withOpacity(0.05),
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                "Cancel",
+                style: TextStyle(
+                  color: theme.primaryColor,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  IconData _getPrayerIcon(String prayerName) {
+    switch (prayerName.toLowerCase()) {
+      case 'fajr':
+        return Icons.wb_twilight;
+      case 'sunrise':
+        return Icons.wb_sunny;
+      case 'dhuhr':
+        return Icons.light_mode;
+      case 'asr':
+        return Icons.wb_sunny_outlined;
+      case 'maghrib':
+        return Icons.nights_stay_outlined;
+      case 'isha':
+        return Icons.nightlight_round;
+      default:
+        return Icons.access_time;
+    }
   }
 
   Map<String, dynamic> calculateNextPrayer() {

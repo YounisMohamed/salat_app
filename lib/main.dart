@@ -1,33 +1,12 @@
 import 'package:awqatalsalah/LocationPickerScreen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
-import 'package:workmanager/workmanager.dart';
 
 import 'MainPage.dart';
 import 'Services/notification_service.dart';
-
-void callbackDispatcher() {
-  Workmanager().executeTask((task, inputData) async {
-    try {
-      // Handle background task
-      print("Executing task: $task with inputData: $inputData");
-
-      // Example: Fetch prayer times and schedule notifications
-      // Ensure this logic doesn't depend on the main app context
-      if (task == "schedulePrayerNotifications") {
-        // Simulate a task, e.g., logging or scheduling notifications
-        print("Background task running for prayer notifications.");
-      }
-
-      return Future.value(true);
-    } catch (e, stackTrace) {
-      print("Error in background task: $e");
-      print(stackTrace);
-      return Future.value(false);
-    }
-  });
-}
+import 'Services/provider.dart';
 
 String lat = "";
 String lon = "";
@@ -47,8 +26,12 @@ void main() async {
   await setLatLon();
   await NotificationService.init();
   tz.initializeTimeZones();
-  Workmanager().initialize(callbackDispatcher);
-  runApp(const MyApp());
+  runApp(MultiProvider(
+    providers: [
+      ChangeNotifierProvider(create: (_) => ReciterProvider()),
+    ],
+    child: const MyApp(),
+  ));
 }
 
 class MyApp extends StatelessWidget {
