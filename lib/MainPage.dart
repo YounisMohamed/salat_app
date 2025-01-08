@@ -68,6 +68,9 @@ class _MainPageState extends State<MainPage> {
 
   Future<void> fetchPrayerTimesAndScheduleNotifications() async {
     await NotificationService.notificationsPlugin.cancelAll();
+    final reciterProvider =
+        Provider.of<ReciterProvider>(context, listen: false);
+
     print("All scheduled notifications cleared.");
     await fetchPrayerTimes();
 
@@ -107,7 +110,6 @@ class _MainPageState extends State<MainPage> {
               parsedTime.minute,
             );
           }
-          // for testing purposes
 
           String hour = parsedTime.hour < 9
               ? "0" + parsedTime.hour.toString()
@@ -117,11 +119,11 @@ class _MainPageState extends State<MainPage> {
               : parsedTime.minute.toString();
 
           await NotificationService.scheduleNotification(
-            id: prayerName.hashCode,
-            title: "Prayer Time: $prayerName",
-            body: "($hour:$minute) It's time for $prayerName prayer.",
-            scheduledTime: scheduledTime,
-          );
+              id: prayerName.hashCode,
+              title: "Prayer Time: $prayerName",
+              body: "($hour:$minute) It's time for $prayerName prayer.",
+              scheduledTime: scheduledTime,
+              soundNumber: reciterProvider.selectedReciter);
 
           print("scheduled time ${scheduledTime} for prayer ${prayerName}");
         } catch (e) {

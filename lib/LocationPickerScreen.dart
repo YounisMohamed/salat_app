@@ -1,8 +1,9 @@
+import 'package:awqatalsalah/MainPage.dart';
 import 'package:awqatalsalah/younisText.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LocationPickerScreen extends StatefulWidget {
@@ -17,6 +18,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   String lon = "";
   String address = "";
   bool latlonSet = false;
+  bool isLoading = false;
   String locationMessage = "";
   late Future<void> _futureSetLatLon;
 
@@ -27,6 +29,10 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   }
 
   Future<Position> _getLocation() async {
+    setState(() {
+      isLoading = true;
+    });
+
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -48,7 +54,8 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
 
     if (permission == LocationPermission.deniedForever) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Location permission is permanently denied.")),
+        const SnackBar(
+            content: Text("Location permission is permanently denied.")),
       );
       return Future.error("Permenantly Denied");
     }
@@ -61,13 +68,12 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
     );
   }
 
-
   void addLatLonToPrefs(String latitude, String longitude) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('lat', latitude);
     await prefs.setString('lon', longitude);
     await prefs.setBool("latlonSet", true);
-    getAddressFromLatLon(latitude, longitude); // Fetch address
+    getAddressFromLatLon(latitude, longitude);
   }
 
   void clearPrefs() async {
@@ -84,7 +90,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
     latlonSet = prefs.getBool("latlonSet") ?? false;
     if (latlonSet) {
       locationMessage = "Location Located\nLatitude: $lat\nLongitude: $lon";
-      await getAddressFromLatLon(lat, lon); // Fetch address
+      await getAddressFromLatLon(lat, lon);
     } else {
       locationMessage = "";
     }
@@ -98,12 +104,15 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
         setState(() {
-          address = "${place.street}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
+          address =
+              "${place.street}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
+          isLoading = false;
         });
       }
     } catch (e) {
       setState(() {
         address = "Failed to fetch address: $e";
+        isLoading = false;
       });
     }
   }
@@ -111,46 +120,155 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Pick a Location")),
       body: FutureBuilder(
         future: _futureSetLatLon,
         builder: (context, snapshot) {
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Center(
-                child: ElevatedButton(
-                    child: const YounisText("Get Location",color: Colors.purple,),
-                    onPressed: () async {
-                      try {
-                        _getLocation().then((value) {
-                          addLatLonToPrefs("${value.latitude}", "${value.longitude}");
-                          setState(() {
-                            setLatLon();
-                          });
-                        });
-                      } catch (e) {
-                        setState(() {
-                          locationMessage = e.toString();
-                        });
-                      }
-                    }
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.purple.shade50,
+                  Colors.white,
+                ],
+              ),
+            ),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 40),
+                    Icon(
+                      Icons.location_on,
+                      size: 80,
+                      color: Colors.purple.shade400,
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      "Location Required",
+                      style: GoogleFonts.dmSans(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.purple.shade700,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      "We need your location to provide accurate prayer times for your area",
+                      style: GoogleFonts.dmSans(
+                        fontSize: 16,
+                        color: Colors.grey[600],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 40),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.purple.shade400,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: isLoading
+                          ? null
+                          : () async {
+                              try {
+                                _getLocation().then((value) {
+                                  addLatLonToPrefs("${value.latitude}",
+                                      "${value.longitude}");
+                                  setState(() {
+                                    setLatLon();
+                                  });
+                                });
+                              } catch (e) {
+                                setState(() {
+                                  locationMessage = e.toString();
+                                });
+                              }
+                            },
+                      child: isLoading
+                          ? const CircularProgressIndicator(
+                              color: Colors.white,
+                            )
+                          : const Text(
+                              "Get Location",
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.white,
+                              ),
+                            ),
+                    ),
+                    if (locationMessage.isNotEmpty) ...[
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.1),
+                              spreadRadius: 1,
+                              blurRadius: 5,
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            YounisText(
+                              locationMessage,
+                              color: Colors.black54,
+                            ),
+                            if (address.isNotEmpty) ...[
+                              const SizedBox(height: 10),
+                              Text(
+                                address,
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 16,
+                                  color: Colors.black87,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                    const Spacer(),
+                    if (latlonSet && !isLoading)
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green.shade400,
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(
+                              builder: (context) => const MainPage(),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          "Proceed to App",
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 20),
+                  ],
                 ),
               ),
-              const SizedBox(
-                height: 15,
-              ),
-              YounisText(locationMessage, color: Colors.black38,),
-              const SizedBox(height: 10),
-              Padding(
-                padding: const EdgeInsets.all(48.0),
-                child: Text(address, style: GoogleFonts.dmSans(
-                    fontSize: 24,
-                    color: Colors.black87
-                ),),
-              ),
-
-            ],
+            ),
           );
         },
       ),
