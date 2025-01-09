@@ -40,11 +40,11 @@ class ReciterProvider with ChangeNotifier {
 
 class MethodProvider with ChangeNotifier {
   late SharedPreferences _prefs;
-  int _selectedMethod = 4;
+  int _selectedMethod = 5;
 
   final Map<int, String> methods = {
-    4: "Umm Al-Qura, Makkah",
     5: "Egyptian General Authority of Survey",
+    4: "Umm Al-Qura, Makkah",
     3: "Muslim World League",
     2: "Islamic Society of North America",
     12: "Union Organization islamic de France",
@@ -76,7 +76,7 @@ class MethodProvider with ChangeNotifier {
 
   Future<void> _loadMethodsFromPrefs() async {
     _prefs = await SharedPreferences.getInstance();
-    _selectedMethod = _prefs.getInt("method") ?? 4;
+    _selectedMethod = _prefs.getInt("method") ?? 5;
     notifyListeners();
   }
 
@@ -102,6 +102,7 @@ class LanguageProvider with ChangeNotifier {
     "Maghrib": "المغرب",
     "Isha": "العشاء",
     "nextPrayer": "الصلاة القادمة",
+    "prayerTimesRefreshed": "تم تحديث مواقيت الصلوات",
     "timeUntil": "الوقت المتبقي",
     "Nasser El Qattamy": "ناصر القطامي",
     "Islam Sobhi": "إسلام صبحي",
@@ -153,6 +154,7 @@ class LanguageProvider with ChangeNotifier {
     "Maghrib": "Maghrib",
     "Isha": "Isha",
     "nextPrayer": "Next Prayer",
+    "prayerTimesRefreshed": "Prayer Times Refreshed!",
     "timeUntil": "Time Remaining",
     "Nasser El Qattamy": "Nasser El Qattamy",
     "Islam Sobhi": "Islam Sobhi",
@@ -209,6 +211,7 @@ class LanguageProvider with ChangeNotifier {
     "Maghrib": "Maghrib",
     "Isha": "Isha",
     "nextPrayer": "Próxima Oración",
+    "prayerTimesRefreshed": "Los Horarios de Oración se han renovado",
     "timeUntil": "Tiempo Restante",
     "Nasser El Qattamy": "Nasser El Qattamy",
     "Islam Sobhi": "Islam Sobhi",
@@ -227,13 +230,11 @@ class LanguageProvider with ChangeNotifier {
     "selectAMethodOfCalculatingPrayerTimes":
         "Selecciona un Método de Cálculo de Horarios de Oración",
     "Umm Al-Qura, Makkah": "Umm Al-Qura, La Meca",
-    "Egyptian General Authority of Survey":
-        "Autoridad General de Encuestas de Egipto",
+    "Egyptian General Authority of Survey": "Autoridad General de Egipto",
     "Muslim World League": "Liga Mundial Musulmana",
     "Islamic Society of North America":
         "Sociedad Islámica de América del Norte",
-    "Union Organization islamic de France":
-        "Organización de la Unión Islámica de Francia",
+    "Union Organization islamic de France": "Organización Islámica de Francia",
     "Comunidade Islamica de Lisboa": "Comunidad Islámica de Lisboa",
     "selectAppLanguage": "Selecciona el Idioma",
     "English": "Inglés",

@@ -270,8 +270,6 @@ class _MainPageState extends State<MainPage> {
 
     // Convert times to hh:mm AM/PM
     String formatTime(String? time) {
-      final languageProvider =
-          Provider.of<LanguageProvider>(context, listen: false);
       if (time == null) return 'N/A';
       try {
         final parsedTime = DateFormat("HH:mm").parse(time);
@@ -321,7 +319,7 @@ class _MainPageState extends State<MainPage> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  translations['nextPrayer']!,
+                  translations['prayerTimesRefreshed']!,
                   style: GoogleFonts.nunito(),
                 ),
                 backgroundColor: const Color(0xFF128C7E),
@@ -401,7 +399,7 @@ class _MainPageState extends State<MainPage> {
             return Column(
               children: [
                 Flexible(
-                  flex: 3,
+                  flex: 6,
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -516,7 +514,7 @@ class _MainPageState extends State<MainPage> {
                   ),
                 ),
                 Flexible(
-                  flex: 2,
+                  flex: 4,
                   child: _buildBottomSection(context),
                 ),
               ],
@@ -609,27 +607,21 @@ class _MainPageState extends State<MainPage> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: "${translations["timeUntil"]}: ",
-                            style: GoogleFonts.nunito(
-                              fontSize: 18,
-                              color: Colors.black54,
-                            ),
-                          ),
-                          TextSpan(
-                            text: timeUntilNextPrayer ?? 'None',
-                            style: GoogleFonts.nunito(
-                              fontSize: 22,
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
+                    Text(
+                      "${translations["timeUntil"]}",
+                      style: GoogleFonts.nunito(
+                        fontSize: 18,
+                        color: Colors.black54,
                       ),
                     ),
+                    Text(
+                      timeUntilNextPrayer ?? 'None',
+                      style: GoogleFonts.nunito(
+                        fontSize: 20,
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
                   ],
                 );
               },

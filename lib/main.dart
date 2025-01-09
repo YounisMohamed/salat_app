@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
       title: 'Prayer Times',
       locale: Locale(languageProvider.selectedLanguage == 2 ? "ar" : "en"),
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.greenAccent),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlueAccent),
         useMaterial3: true,
       ),
       home: Directionality(

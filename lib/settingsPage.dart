@@ -70,6 +70,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     fontWeight: FontWeight.bold,
                     color: Colors.black54,
                   ),
+                  textAlign: TextAlign.center,
                 ),
                 SizedBox(
                   height: 16,
@@ -129,6 +130,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     fontWeight: FontWeight.bold,
                     color: Colors.black54,
                   ),
+                  textAlign: TextAlign.center,
                 ),
                 SizedBox(
                   height: 16,
@@ -187,6 +189,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     fontWeight: FontWeight.bold,
                     color: Colors.black54,
                   ),
+                  textAlign: TextAlign.center,
                 ),
                 SizedBox(
                   height: 16,

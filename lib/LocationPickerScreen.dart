@@ -28,9 +28,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   @override
   void initState() {
     super.initState();
-    _futureSetLatLon = setLatLon().then((_) {
-      getAddressFromLatLon(lat, lon);
-    });
+    _futureSetLatLon = setLatLon();
   }
 
   Future<Position> _getLocation(LanguageProvider languageProvider) async {
@@ -70,6 +68,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
     LocationSettings locationSettings = const LocationSettings(
       accuracy: LocationAccuracy.high,
     );
+
     return await Geolocator.getCurrentPosition(
       locationSettings: locationSettings,
     );
@@ -95,6 +94,16 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
     lat = prefs.getString('lat') ?? '';
     lon = prefs.getString('lon') ?? '';
     latlonSet = prefs.getBool("latlonSet") ?? false;
+    if (latlonSet) {
+      getAddressFromLatLon(lat, lon);
+    }
+  }
+
+  Future<void> removeLatLon() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('lat', "");
+    prefs.setString('lon', "");
+    prefs.setBool("latlonSet", false);
   }
 
   Future<void> getAddressFromLatLon(String latitude, String longitude) async {
@@ -112,7 +121,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       }
     } catch (e) {
       setState(() {
-        address = "Failed to fetch address: $e";
+        address = "Address Not Set Yet";
         isLoading = false;
       });
     }
@@ -193,17 +202,22 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                       onPressed: isLoading
                           ? null
                           : () async {
+                              setState(() {
+                                isLoading = true;
+                              });
                               try {
-                                _getLocation(languageProvider).then((value) {
-                                  addLatLonToPrefs("${value.latitude}",
-                                      "${value.longitude}");
-                                  setState(() {
-                                    setLatLon();
-                                  });
-                                });
+                                final position =
+                                    await _getLocation(languageProvider);
+                                addLatLonToPrefs("${position.latitude}",
+                                    "${position.longitude}");
+                                await setLatLon();
                               } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(e.toString())),
+                                );
+                              } finally {
                                 setState(() {
-                                  locationMessage = e.toString();
+                                  isLoading = false;
                                 });
                               }
                             },

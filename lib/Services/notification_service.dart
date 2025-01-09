@@ -33,13 +33,12 @@ class NotificationService {
     // Create all channels during initialization
     for (var channelData in channels.values) {
       final AndroidNotificationChannel channel = AndroidNotificationChannel(
-        channelData['channelId']!,
-        channelData['channelName']!,
-        description: 'This channel is used for prayer reminders',
-        importance: Importance.high,
-        sound: RawResourceAndroidNotificationSound(channelData['soundFile']!),
-        playSound: true,
-      );
+          channelData['channelId']!, channelData['channelName']!,
+          description: 'This channel is used for prayer reminders',
+          importance: Importance.high,
+          sound: RawResourceAndroidNotificationSound(channelData['soundFile']!),
+          playSound: true,
+          audioAttributesUsage: AudioAttributesUsage.media);
 
       await notificationsPlugin
           .resolvePlatformSpecificImplementation<
