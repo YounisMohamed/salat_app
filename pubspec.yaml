@@ -46,6 +46,7 @@ dependencies:
   timezone: ^0.10.0
   workmanager: ^0.5.2
   provider: ^6.1.2
+  permission_handler: ^11.3.1
 
 
 

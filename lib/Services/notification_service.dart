@@ -46,11 +46,6 @@ class NotificationService {
               AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(channel);
     }
-
-    await notificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestNotificationsPermission();
   }
 
   static Future<void> onReceiveNoti(NotificationResponse notResponse) async {}

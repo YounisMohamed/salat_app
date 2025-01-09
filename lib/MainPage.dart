@@ -1,4 +1,5 @@
 import 'package:awqatalsalah/response.dart';
+import 'package:awqatalsalah/settingsPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -158,6 +159,7 @@ class _MainPageState extends State<MainPage> {
   AdhanResponse? _prayerData;
 
   Future<void> fetchPrayerTimesFromApi(SharedPreferences prefs) async {
+    final methodProvider = Provider.of<MethodProvider>(context, listen: false);
     if (!latlonSet || lat.isEmpty || lon.isEmpty) {
       print("lat lon is not set $latlonSet");
       print("lat is empty ${lat.isEmpty}");
@@ -174,7 +176,12 @@ class _MainPageState extends State<MainPage> {
 
     try {
       print("Fetching prayer times from API");
-      final response = await _api.getTimings(date: date, lat: lat, lon: lon);
+      print("SELECTED METHOD: ${methodProvider.selectedMethod}");
+      final response = await _api.getTimings(
+          date: date,
+          lat: lat,
+          lon: lon,
+          method: methodProvider.selectedMethod);
 
       setState(() {
         _prayerData = response;
@@ -263,6 +270,8 @@ class _MainPageState extends State<MainPage> {
 
     // Convert times to hh:mm AM/PM
     String formatTime(String? time) {
+      final languageProvider =
+          Provider.of<LanguageProvider>(context, listen: false);
       if (time == null) return 'N/A';
       try {
         final parsedTime = DateFormat("HH:mm").parse(time);
@@ -285,15 +294,17 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    final translations = languageProvider.translations;
+
     return Scaffold(
       backgroundColor: const Color(0xFFEFF5EB), // Light green background
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: const Color(0xFF128C7E),
-        // Deep green
+        backgroundColor: const Color(0xFF128C7E), // Deep green
         title: Text(
-          "Prayer Times (Younis)",
-          style: GoogleFonts.notoNaskhArabic(
+          translations['title']!,
+          style: GoogleFonts.nunito(
             fontSize: 21,
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -310,8 +321,8 @@ class _MainPageState extends State<MainPage> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  'Prayer Times Refreshed',
-                  style: GoogleFonts.notoNaskhArabic(),
+                  translations['nextPrayer']!,
+                  style: GoogleFonts.nunito(),
                 ),
                 backgroundColor: const Color(0xFF128C7E),
                 duration: const Duration(milliseconds: 1000),
@@ -340,8 +351,9 @@ class _MainPageState extends State<MainPage> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
-                      "Set Your Location First",
-                      style: GoogleFonts.notoNaskhArabic(
+                      translations['locationRequired'] ??
+                          "Set Your Location First",
+                      style: GoogleFonts.nunito(
                         fontSize: 20,
                         color: const Color(0xFF128C7E),
                       ),
@@ -371,8 +383,9 @@ class _MainPageState extends State<MainPage> {
                           const Icon(Icons.location_on, color: Colors.white),
                           const SizedBox(width: 8),
                           Text(
-                            "Set Location",
-                            style: GoogleFonts.notoNaskhArabic(
+                            translations['goToLocationScreen'] ??
+                                "Set Location",
+                            style: GoogleFonts.nunito(
                               fontSize: 16,
                               color: Colors.white,
                             ),
@@ -446,8 +459,8 @@ class _MainPageState extends State<MainPage> {
                               ),
                             ),
                             title: Text(
-                              prayer['name']!,
-                              style: GoogleFonts.notoNaskhArabic(
+                              translations[prayer['name']] ?? prayer['name']!,
+                              style: GoogleFonts.nunito(
                                 fontWeight: isHighlighted
                                     ? FontWeight.bold
                                     : FontWeight.normal,
@@ -461,8 +474,13 @@ class _MainPageState extends State<MainPage> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  prayer['time']!,
-                                  style: GoogleFonts.notoNaskhArabic(
+                                  languageProvider.selectedLanguage == 2
+                                      ? prayer['time']
+                                          .toString()
+                                          .replaceAll("PM", "مسائا")
+                                          .replaceAll("AM", "صباحا")
+                                      : prayer['time']!,
+                                  style: GoogleFonts.nunito(
                                     fontWeight: isHighlighted
                                         ? FontWeight.bold
                                         : FontWeight.normal,
@@ -511,6 +529,8 @@ class _MainPageState extends State<MainPage> {
 
   Widget _buildBottomSection(BuildContext context) {
     final reciterProvider = Provider.of<ReciterProvider>(context);
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    final translations = languageProvider.translations;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -554,8 +574,13 @@ class _MainPageState extends State<MainPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      currentTime,
-                      style: GoogleFonts.notoNaskhArabic(
+                      languageProvider.selectedLanguage == 2
+                          ? currentTime
+                              .toString()
+                              .replaceAll("PM", "مسائا")
+                              .replaceAll("AM", "صباحا")
+                          : currentTime,
+                      style: GoogleFonts.nunito(
                         fontSize: 21,
                         fontWeight: FontWeight.bold,
                         color: Colors.white70,
@@ -566,7 +591,7 @@ class _MainPageState extends State<MainPage> {
                       text: TextSpan(
                         children: [
                           TextSpan(
-                            text: "Next Prayer: ",
+                            text: "${translations["nextPrayer"]}: ",
                             style: GoogleFonts.nunito(
                               fontSize: 18,
                               color: Colors.black54,
@@ -575,7 +600,7 @@ class _MainPageState extends State<MainPage> {
                           TextSpan(
                             text: nextPrayerName ?? 'None',
                             style: GoogleFonts.nunito(
-                              fontSize: 20,
+                              fontSize: 22,
                               color: Colors.black,
                               fontWeight: FontWeight.bold,
                             ),
@@ -588,16 +613,16 @@ class _MainPageState extends State<MainPage> {
                       text: TextSpan(
                         children: [
                           TextSpan(
-                            text: "Time Until: ",
+                            text: "${translations["timeUntil"]}: ",
                             style: GoogleFonts.nunito(
                               fontSize: 18,
                               color: Colors.black54,
                             ),
                           ),
                           TextSpan(
-                            text: timeUntilNextPrayer,
+                            text: timeUntilNextPrayer ?? 'None',
                             style: GoogleFonts.nunito(
-                              fontSize: 20,
+                              fontSize: 22,
                               color: Colors.black,
                               fontWeight: FontWeight.bold,
                             ),
@@ -638,7 +663,7 @@ class _MainPageState extends State<MainPage> {
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (context) => const LocationPickerScreen(),
+                            builder: (context) => const SettingsPage(),
                           ),
                         );
                       },
@@ -679,14 +704,15 @@ class _MainPageState extends State<MainPage> {
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: () async {
-                        await _showReciterDialog(context, reciterProvider);
+                        await _showReciterDialog(
+                            context, reciterProvider, languageProvider);
                       },
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         alignment: Alignment.center,
                         child: Text(
-                          reciterProvider.selectedReciterName,
+                          translations[reciterProvider.selectedReciterName]!,
                           style: GoogleFonts.nunito(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -707,8 +733,11 @@ class _MainPageState extends State<MainPage> {
   }
 
   Future<void> _showReciterDialog(
-      BuildContext context, ReciterProvider reciterProvider) async {
+      BuildContext context,
+      ReciterProvider reciterProvider,
+      LanguageProvider languageProvider) async {
     final theme = Theme.of(context);
+    final translations = languageProvider.translations;
 
     showDialog(
       context: context,
@@ -727,7 +756,7 @@ class _MainPageState extends State<MainPage> {
               ),
               const SizedBox(height: 12),
               Text(
-                "Select a Reciter",
+                translations["selectAReciter"]!,
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -776,7 +805,7 @@ class _MainPageState extends State<MainPage> {
                       ),
                     ),
                     title: Text(
-                      entry.value,
+                      translations[entry.value]!,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -799,7 +828,7 @@ class _MainPageState extends State<MainPage> {
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
-                "Cancel",
+                translations["cancel"]!,
                 style: TextStyle(
                   color: theme.primaryColor,
                   fontWeight: FontWeight.w500,
@@ -832,6 +861,8 @@ class _MainPageState extends State<MainPage> {
   }
 
   Map<String, dynamic> calculateNextPrayer() {
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    final translations = languageProvider.translations;
     final now = DateTime.now();
 
     DateTime? nextPrayerTime;
@@ -850,7 +881,7 @@ class _MainPageState extends State<MainPage> {
 
       if (now.isBefore(todayPrayerTime)) {
         nextPrayerTime = todayPrayerTime;
-        nextPrayerName = prayer['name'];
+        nextPrayerName = translations[prayer['name']];
         timeLeft = todayPrayerTime.difference(now);
         break;
       }
@@ -868,7 +899,7 @@ class _MainPageState extends State<MainPage> {
       );
 
       nextPrayerTime = nextDayFajrTime;
-      nextPrayerName = prayerTimes.first['name'];
+      nextPrayerName = translations[prayerTimes.first['name']];
       timeLeft = nextDayFajrTime.difference(now);
     }
 

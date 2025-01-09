@@ -1,10 +1,16 @@
 import 'dart:convert';
+
 import 'package:awqatalsalah/response.dart';
 import 'package:http/http.dart' as http;
 
 class api {
-  Future<AdhanResponse> getTimings({required String date, required String lat, required String lon}) async {
-    String link = "https://api.aladhan.com/v1/timings/$date?latitude=$lat&longitude=$lon";
+  Future<AdhanResponse> getTimings(
+      {required String date,
+      required String lat,
+      required String lon,
+      int method = 4}) async {
+    String link =
+        "https://api.aladhan.com/v1/timings/$date?latitude=$lat&longitude=$lon&method=$method";
     print("Link: $link");
     var url = Uri.parse(link);
 
@@ -16,8 +22,7 @@ class api {
           'Content-Type': 'application/json',
         },
       );
-    }
-    catch(e) {
+    } catch (e) {
       print("You may not have internet connection");
       throw Exception("No internet connection");
     }
@@ -27,9 +32,9 @@ class api {
       final result = AdhanResponse.fromJson(jsonData);
       print('Response data: ${response.body}');
       return result;
-    }
-    else {
-      print('Failed to load data. Status code: ${response.statusCode} Info: ${response.body}');
+    } else {
+      print(
+          'Failed to load data. Status code: ${response.statusCode} Info: ${response.body}');
       throw Exception('Failed to load prayer times');
     }
   }

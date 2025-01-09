@@ -1,10 +1,13 @@
-import 'package:awqatalsalah/MainPage.dart';
 import 'package:awqatalsalah/younisText.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'MainPage.dart';
+import 'Services/provider.dart';
 
 class LocationPickerScreen extends StatefulWidget {
   const LocationPickerScreen({super.key});
@@ -25,10 +28,13 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   @override
   void initState() {
     super.initState();
-    _futureSetLatLon = setLatLon();
+    _futureSetLatLon = setLatLon().then((_) {
+      getAddressFromLatLon(lat, lon);
+    });
   }
 
-  Future<Position> _getLocation() async {
+  Future<Position> _getLocation(LanguageProvider languageProvider) async {
+    final translations = languageProvider.translations;
     setState(() {
       isLoading = true;
     });
@@ -36,7 +42,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enable location services.")),
+        SnackBar(content: Text(translations["pleaseEnableLocationServices"]!)),
       );
       return Future.error("Please Open Location");
     }
@@ -46,7 +52,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Location permission is denied.")),
+          SnackBar(content: Text(translations["locationPermissionIsDenied"]!)),
         );
         return Future.error("Location denied");
       }
@@ -54,8 +60,9 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
 
     if (permission == LocationPermission.deniedForever) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text("Location permission is permanently denied.")),
+        SnackBar(
+            content:
+                Text(translations["locationPermissionIsPermanentlyDenied"]!)),
       );
       return Future.error("Permenantly Denied");
     }
@@ -88,12 +95,6 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
     lat = prefs.getString('lat') ?? '';
     lon = prefs.getString('lon') ?? '';
     latlonSet = prefs.getBool("latlonSet") ?? false;
-    if (latlonSet) {
-      locationMessage = "Location Located\nLatitude: $lat\nLongitude: $lon";
-      await getAddressFromLatLon(lat, lon);
-    } else {
-      locationMessage = "";
-    }
   }
 
   Future<void> getAddressFromLatLon(String latitude, String longitude) async {
@@ -119,17 +120,32 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    final translations = languageProvider.translations;
     return Scaffold(
       body: FutureBuilder(
         future: _futureSetLatLon,
         builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF128C7E),
+              ),
+            );
+          }
+          if (latlonSet) {
+            locationMessage =
+                "${translations["locationLocated"]!}\n${translations["lat"]!}: $lat\n${translations["lon"]!}: $lon";
+          } else {
+            locationMessage = "";
+          }
           return Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.purple.shade50,
+                  Colors.greenAccent.shade100,
                   Colors.white,
                 ],
               ),
@@ -144,21 +160,21 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                     Icon(
                       Icons.location_on,
                       size: 80,
-                      color: Colors.purple.shade400,
+                      color: Colors.greenAccent.shade400,
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      "Location Required",
+                      translations["locationRequired"]!,
                       style: GoogleFonts.dmSans(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
-                        color: Colors.purple.shade700,
+                        color: Colors.greenAccent.shade700,
                       ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      "We need your location to provide accurate prayer times for your area",
+                      translations["locationDescription"]!,
                       style: GoogleFonts.dmSans(
                         fontSize: 16,
                         color: Colors.grey[600],
@@ -168,7 +184,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                     const SizedBox(height: 40),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.purple.shade400,
+                        backgroundColor: Colors.greenAccent.shade400,
                         padding: const EdgeInsets.symmetric(vertical: 15),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -178,7 +194,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                           ? null
                           : () async {
                               try {
-                                _getLocation().then((value) {
+                                _getLocation(languageProvider).then((value) {
                                   addLatLonToPrefs("${value.latitude}",
                                       "${value.longitude}");
                                   setState(() {
@@ -195,9 +211,9 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                           ? const CircularProgressIndicator(
                               color: Colors.white,
                             )
-                          : const Text(
-                              "Get Location",
-                              style: TextStyle(
+                          : Text(
+                              translations["getLocation"]!,
+                              style: const TextStyle(
                                 fontSize: 16,
                                 color: Colors.white,
                               ),
@@ -256,8 +272,8 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                             ),
                           );
                         },
-                        child: const Text(
-                          "Proceed to App",
+                        child: Text(
+                          translations["procceedToApp"]!,
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.white,
