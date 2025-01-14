@@ -1,11 +1,11 @@
-import 'package:awqatalsalah/AppRouter.dart';
+import 'package:awqatalsalah/mainFlow/AppRouter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:timezone/data/latest.dart' as tz;
 
-import 'Services/WorkManagerService.dart';
-import 'Services/notification_service.dart';
-import 'Services/provider.dart';
+import '../Services/WorkManagerService.dart';
+import '../Services/notification_service.dart';
+import '../Services/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

@@ -1,6 +1,6 @@
 import 'package:awqatalsalah/Services/WorkManagerService.dart';
-import 'package:awqatalsalah/response.dart';
-import 'package:awqatalsalah/settingsPage.dart';
+import 'package:awqatalsalah/Services/response.dart';
+import 'package:awqatalsalah/mainFlow/settingsPage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -9,10 +9,10 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../Services/api.dart';
+import '../Services/notification_service.dart';
+import '../Services/provider.dart';
 import 'LocationPickerScreen.dart';
-import 'Services/notification_service.dart';
-import 'Services/provider.dart';
-import 'api.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});

@@ -1,4 +1,4 @@
-import 'package:awqatalsalah/settingsPageAtTheStart.dart';
+import 'package:awqatalsalah/mainFlow/settingsPageAtTheStart.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

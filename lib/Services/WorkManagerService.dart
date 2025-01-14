@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:workmanager/workmanager.dart';
 
-import '../api.dart';
+import 'api.dart';
 import 'notification_service.dart';
 
 class WorkManagerService {

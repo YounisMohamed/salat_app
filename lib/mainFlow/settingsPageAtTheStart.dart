@@ -1,5 +1,5 @@
-import 'package:awqatalsalah/PermissionPage.dart';
 import 'package:awqatalsalah/Services/provider.dart';
+import 'package:awqatalsalah/mainFlow/PermissionPage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';

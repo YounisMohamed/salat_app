@@ -1,4 +1,3 @@
-import 'package:awqatalsalah/younisText.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
@@ -6,8 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../Services/provider.dart';
 import 'MainPage.dart';
-import 'Services/provider.dart';
 
 class LocationPickerScreen extends StatefulWidget {
   const LocationPickerScreen({super.key});
@@ -75,7 +74,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
     );
   }
 
-  void addLatLonToPrefs(String latitude, String longitude) async {
+  Future<void> addLatLonToPrefs(String latitude, String longitude) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('lat', latitude);
     await prefs.setString('lon', longitude);
@@ -92,11 +91,13 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
 
   Future<void> setLatLon() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    lat = prefs.getString('lat') ?? '';
-    lon = prefs.getString('lon') ?? '';
-    latlonSet = prefs.getBool("latlonSet") ?? false;
+    setState(() {
+      lat = prefs.getString('lat') ?? '';
+      lon = prefs.getString('lon') ?? '';
+      latlonSet = prefs.getBool("latlonSet") ?? false;
+    });
     if (latlonSet) {
-      getAddressFromLatLon(lat, lon);
+      await getAddressFromLatLon(lat, lon);
     }
   }
 
@@ -214,9 +215,20 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                               try {
                                 final position =
                                     await _getLocation(languageProvider);
-                                addLatLonToPrefs("${position.latitude}",
+                                await addLatLonToPrefs("${position.latitude}",
                                     "${position.longitude}");
                                 await setLatLon();
+
+                                if (latlonSet) {
+                                  setState(() {
+                                    locationMessage =
+                                        "${translations["lat"]!}: $lat\n${translations["lon"]!}: $lon";
+                                  });
+                                } else {
+                                  setState(() {
+                                    locationMessage = "";
+                                  });
+                                }
                               } catch (e) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text(e.toString())),
@@ -256,10 +268,12 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                         ),
                         child: Column(
                           children: [
-                            YounisText(
+                            Text(
                               locationMessage,
-                              color:
-                                  theme.colorScheme.onSurface.withOpacity(0.7),
+                              style: TextStyle(
+                                  color: theme.colorScheme.onSurface
+                                      .withOpacity(0.7),
+                                  fontSize: 20),
                             ),
                             if (address.isNotEmpty) ...[
                               const SizedBox(height: 10),

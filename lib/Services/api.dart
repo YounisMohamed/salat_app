@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:awqatalsalah/response.dart';
+import 'package:awqatalsalah/Services/response.dart';
 import 'package:http/http.dart' as http;
 
 class Api {

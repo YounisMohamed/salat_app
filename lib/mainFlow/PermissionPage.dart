@@ -1,9 +1,9 @@
-import 'package:awqatalsalah/LocationPickerScreen.dart';
+import 'package:awqatalsalah/mainFlow/LocationPickerScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
-import 'Services/provider.dart';
+import '../Services/provider.dart';
 
 void main() => runApp(const MyApp());
 
