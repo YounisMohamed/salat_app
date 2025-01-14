@@ -32,7 +32,7 @@ class _AppRouterState extends State<AppRouter> {
     lon = prefs.getString('lon') ?? '';
     latlonSet = prefs.getBool("latlonSet") ?? false;
     print(latlonSet);
-    print("SET LAT LON ON MAIN ^");
+    print("SET LAT LON ON APP ROUTER");
   }
 
   bool _isFirstLaunch = true;

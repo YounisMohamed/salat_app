@@ -144,6 +144,8 @@ class LanguageProvider with ChangeNotifier {
     "locationPermissionIsDenied": "تم رفض الاذن لتحديد الموقع",
     "locationPermissionIsPermanentlyDenied":
         "تم رفض الاذن لتحديد الموقع للابد, برجاء تشغيله فالاعدادات",
+    "settingsWarning":
+        "بعد تغيير أي إعدادات، يرجى العودة إلى الصفحة الرئيسية والضغط على زر التحديث لتطبيق التغييرات",
   };
   final Map<String, String> toEnglish = {
     "title": "Prayer Times",
@@ -200,6 +202,8 @@ class LanguageProvider with ChangeNotifier {
     "locationPermissionIsDenied": "Location permission is denied",
     "locationPermissionIsPermanentlyDenied":
         "Location permission is permanently denied, please enable it in settings",
+    "settingsWarning":
+        "After changing any settings, please return to the home page and click the refresh button to apply your changes.",
   };
 
   final Map<String, String> toSpanish = {
@@ -256,6 +260,8 @@ class LanguageProvider with ChangeNotifier {
     "locationPermissionIsDenied": "Permiso de ubicación denegado",
     "locationPermissionIsPermanentlyDenied":
         "Permiso de ubicación denegado permanentemente, actívalo en configuraciones",
+    "settingsWarning":
+        "Después de cambiar cualquier configuración, regrese a la página de inicio y haga clic en el botón Actualizar para aplicar los cambios",
   };
 
   LanguageProvider() {
@@ -286,6 +292,40 @@ class LanguageProvider with ChangeNotifier {
   Future<void> setLanguage(int languageNumber) async {
     _selectedLanguage = languageNumber;
     await _prefs.setInt("language", languageNumber);
+    notifyListeners();
+  }
+}
+
+class ThemeProvider with ChangeNotifier {
+  late SharedPreferences _prefs;
+  String _selectedColor = "Default";
+
+  final Map<String, Color> colorThemes = {
+    "Default": Colors.grey,
+    "Purple": Colors.deepPurpleAccent,
+    "Brown": Colors.deepOrange,
+    "Blue": Colors.blue,
+    "Gold": Colors.amberAccent,
+    "Green": Colors.greenAccent,
+    "Indigo": Colors.indigoAccent,
+  };
+
+  ThemeProvider() {
+    _loadThemeFromPrefs();
+  }
+
+  String get selectedColor => _selectedColor;
+  Color get selectedTheme => colorThemes[_selectedColor] ?? Colors.red;
+
+  Future<void> _loadThemeFromPrefs() async {
+    _prefs = await SharedPreferences.getInstance();
+    _selectedColor = _prefs.getString("color") ?? "Default";
+    notifyListeners();
+  }
+
+  Future<void> setTheme(String colorName) async {
+    _selectedColor = colorName;
+    await _prefs.setString("color", colorName);
     notifyListeners();
   }
 }

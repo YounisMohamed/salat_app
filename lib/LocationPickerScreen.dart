@@ -129,32 +129,35 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final languageProvider = Provider.of<LanguageProvider>(context);
     final translations = languageProvider.translations;
+
     return Scaffold(
       body: FutureBuilder(
         future: _futureSetLatLon,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
+            return Center(
               child: CircularProgressIndicator(
-                color: Color(0xFF128C7E),
+                color: theme.colorScheme.primary,
               ),
             );
           }
           if (latlonSet) {
             locationMessage =
-                "${translations["locationLocated"]!}\n${translations["lat"]!}: $lat\n${translations["lon"]!}: $lon";
+                "${translations["lat"]!}: $lat\n${translations["lon"]!}: $lon";
           } else {
             locationMessage = "";
           }
+
           return Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.greenAccent.shade100,
+                  theme.colorScheme.primary.withOpacity(0.1),
                   Colors.white,
                 ],
               ),
@@ -169,7 +172,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                     Icon(
                       Icons.location_on,
                       size: 80,
-                      color: Colors.greenAccent.shade400,
+                      color: theme.colorScheme.primary.withOpacity(0.8),
                     ),
                     const SizedBox(height: 20),
                     Text(
@@ -177,7 +180,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                       style: GoogleFonts.dmSans(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
-                        color: Colors.greenAccent.shade700,
+                        color: theme.colorScheme.primary,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -186,14 +189,14 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                       translations["locationDescription"]!,
                       style: GoogleFonts.dmSans(
                         fontSize: 16,
-                        color: Colors.grey[600],
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
                       ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 40),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.greenAccent.shade400,
+                        backgroundColor: theme.colorScheme.primary,
                         padding: const EdgeInsets.symmetric(vertical: 15),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -242,7 +245,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.grey.withOpacity(0.1),
+                              color: theme.colorScheme.shadow.withOpacity(0.1),
                               spreadRadius: 1,
                               blurRadius: 5,
                             ),
@@ -252,7 +255,8 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                           children: [
                             YounisText(
                               locationMessage,
-                              color: Colors.black54,
+                              color:
+                                  theme.colorScheme.onSurface.withOpacity(0.7),
                             ),
                             if (address.isNotEmpty) ...[
                               const SizedBox(height: 10),
@@ -260,7 +264,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                                 address,
                                 style: GoogleFonts.dmSans(
                                   fontSize: 16,
-                                  color: Colors.black87,
+                                  color: theme.colorScheme.onSurface,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
@@ -273,7 +277,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                     if (latlonSet && !isLoading)
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green.shade400,
+                          backgroundColor: theme.colorScheme.primary,
                           padding: const EdgeInsets.symmetric(vertical: 15),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
@@ -290,7 +294,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                           translations["procceedToApp"]!,
                           style: TextStyle(
                             fontSize: 16,
-                            color: Colors.white,
+                            color: theme.colorScheme.onPrimary,
                           ),
                         ),
                       ),

@@ -1,3 +1,4 @@
+import 'package:awqatalsalah/Services/WorkManagerService.dart';
 import 'package:awqatalsalah/response.dart';
 import 'package:awqatalsalah/settingsPage.dart';
 import 'package:flutter/material.dart';
@@ -41,6 +42,8 @@ class _MainPageState extends State<MainPage> {
     _initNotificationsPreferences();
     _prayerTimesFuture = fetchPrayerTimes().then((_) {
       fetchPrayerTimesAndScheduleNotifications();
+    }).then((_) {
+      WorkManagerService.registerTask();
     });
   }
 
@@ -71,9 +74,10 @@ class _MainPageState extends State<MainPage> {
     await NotificationService.notificationsPlugin.cancelAll();
     final reciterProvider =
         Provider.of<ReciterProvider>(context, listen: false);
-
-    print("All scheduled notifications cleared.");
-    await fetchPrayerTimes();
+    final languageProvider =
+        Provider.of<LanguageProvider>(context, listen: false);
+    print("All scheduled notifications cleared In main page.");
+    //await fetchPrayerTimes();
 
     if (_prayerData != null) {
       final Map<String, String> prayerTimes = {
@@ -84,6 +88,7 @@ class _MainPageState extends State<MainPage> {
         "Maghrib": _prayerData!.timings.maghrib,
         "Isha": _prayerData!.timings.isha,
       };
+
       for (int i = 0; i < prayerTimes.length; i++) {
         String prayerName = prayerTimes.keys.toList()[i];
         String? prayerTime = prayerTimes[prayerName];
@@ -91,7 +96,6 @@ class _MainPageState extends State<MainPage> {
         try {
           final DateTime now = DateTime.now();
 
-          // Parse the prayer time into a DateTime object
           final DateTime parsedTime = DateFormat("HH:mm").parse(prayerTime!);
           DateTime scheduledTime = DateTime(
             now.year,
@@ -119,23 +123,35 @@ class _MainPageState extends State<MainPage> {
               ? "0" + parsedTime.minute.toString()
               : parsedTime.minute.toString();
 
-          await NotificationService.scheduleNotification(
-              id: prayerName.hashCode,
-              title: "Prayer Time: $prayerName",
-              body: "($hour:$minute) It's time for $prayerName prayer.",
-              scheduledTime: scheduledTime,
-              soundNumber: reciterProvider.selectedReciter);
+          if (languageProvider.selectedLanguage == 2) {
+            String bodyArabic = "($hour:$minute)" + " حان وقت الصلاة";
+            await NotificationService.scheduleNotification(
+                id: prayerName.hashCode,
+                title: "$prayerName Prayer",
+                body: bodyArabic,
+                scheduledTime: scheduledTime,
+                soundNumber: reciterProvider.selectedReciter);
+          } else {
+            await NotificationService.scheduleNotification(
+                id: prayerName.hashCode,
+                title: "$prayerName Prayer",
+                body: "($hour:$minute) It's time for $prayerName prayer.",
+                scheduledTime: scheduledTime,
+                soundNumber: reciterProvider.selectedReciter);
+          }
 
           print("scheduled time ${scheduledTime} for prayer ${prayerName}");
         } catch (e) {
           print("Error scheduling notification for $prayerName: $e");
         }
+        print("PRAYER NAME HASHCODE: ${prayerName.hashCode}");
       }
-      List<PendingNotificationRequest> active = await NotificationService
+      List<PendingNotificationRequest> finalActive = await NotificationService
           .notificationsPlugin
           .pendingNotificationRequests();
-      for (int i = 0; i < active.length; i++) {
-        print("Active ${i + 1} is ${active[i].body}");
+      for (int i = 0; i < finalActive.length; i++) {
+        print(
+            "Active ${i + 1} is ${finalActive[i].body} HASH CODE: ${finalActive[i].id}");
       }
     } else {
       print("error");
@@ -152,7 +168,7 @@ class _MainPageState extends State<MainPage> {
     lon = prefs.getString('lon') ?? '';
     latlonSet = prefs.getBool("latlonSet") ?? false;
     print(latlonSet);
-    print("SET LAT LON ON MAIN ^");
+    print("SET LAT LON ON MAIN PAGE");
   }
 
   final api _api = api();
@@ -187,7 +203,6 @@ class _MainPageState extends State<MainPage> {
         _prayerData = response;
       });
 
-      // Cache the prayer times
       cachePrayerTimes(response, prefs, now);
     } catch (e) {
       print('Error fetching prayer times from API: $e');
@@ -252,6 +267,7 @@ class _MainPageState extends State<MainPage> {
     } else {
       // Fetch new data from API
       await fetchPrayerTimesFromApi(prefs);
+      await fetchPrayerTimesAndScheduleNotifications();
     }
   }
 
@@ -294,24 +310,25 @@ class _MainPageState extends State<MainPage> {
   Widget build(BuildContext context) {
     final languageProvider = Provider.of<LanguageProvider>(context);
     final translations = languageProvider.translations;
+    final theme = Theme.of(context); // Fetch current theme colors
 
     return Scaffold(
-      backgroundColor: const Color(0xFFEFF5EB), // Light green background
+      backgroundColor:
+          theme.colorScheme.background.withOpacity(0.1), // Light gradient
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: const Color(0xFF128C7E), // Deep green
+        backgroundColor: theme.primaryColor, // Use theme primary color
         title: Text(
           translations['title']!,
           style: GoogleFonts.nunito(
             fontSize: 21,
-            color: Colors.white,
+            color: theme.colorScheme.onPrimary,
             fontWeight: FontWeight.bold,
           ),
         ),
         centerTitle: true,
         leading: IconButton(
           onPressed: () async {
-            await fetchPrayerTimes(forceRefresh: true);
             setState(() {
               _prayerTimesFuture = fetchPrayerTimes(forceRefresh: true);
             });
@@ -322,12 +339,12 @@ class _MainPageState extends State<MainPage> {
                   translations['prayerTimesRefreshed']!,
                   style: GoogleFonts.nunito(),
                 ),
-                backgroundColor: const Color(0xFF128C7E),
+                backgroundColor: theme.primaryColor,
                 duration: const Duration(milliseconds: 1000),
               ),
             );
           },
-          icon: const Icon(Icons.refresh, color: Colors.white),
+          icon: Icon(Icons.refresh, color: theme.colorScheme.onPrimary),
         ),
       ),
       body: SafeArea(
@@ -335,9 +352,9 @@ class _MainPageState extends State<MainPage> {
           future: _prayerTimesFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
+              return Center(
                 child: CircularProgressIndicator(
-                  color: Color(0xFF128C7E),
+                  color: theme.primaryColor,
                 ),
               );
             }
@@ -346,14 +363,13 @@ class _MainPageState extends State<MainPage> {
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Text(
                       translations['locationRequired'] ??
                           "Set Your Location First",
                       style: GoogleFonts.nunito(
                         fontSize: 20,
-                        color: const Color(0xFF128C7E),
+                        color: theme.primaryColor,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -366,7 +382,7 @@ class _MainPageState extends State<MainPage> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF128C7E),
+                        backgroundColor: theme.primaryColor,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 32,
                           vertical: 16,
@@ -378,14 +394,15 @@ class _MainPageState extends State<MainPage> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.location_on, color: Colors.white),
+                          Icon(Icons.location_on,
+                              color: theme.colorScheme.onPrimary),
                           const SizedBox(width: 8),
                           Text(
                             translations['goToLocationScreen'] ??
                                 "Set Location",
                             style: GoogleFonts.nunito(
                               fontSize: 16,
-                              color: Colors.white,
+                              color: theme.colorScheme.onPrimary,
                             ),
                           ),
                         ],
@@ -402,10 +419,10 @@ class _MainPageState extends State<MainPage> {
                   flex: 6,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: theme.colorScheme.surface,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
+                          color: theme.colorScheme.shadow.withOpacity(0.1),
                           spreadRadius: 1,
                           blurRadius: 10,
                         ),
@@ -414,7 +431,7 @@ class _MainPageState extends State<MainPage> {
                     child: ListView.separated(
                       itemCount: prayerTimes.length,
                       separatorBuilder: (context, index) => Divider(
-                        color: const Color(0xFF128C7E).withOpacity(0.1),
+                        color: theme.colorScheme.primary.withOpacity(0.1),
                         height: 1,
                       ),
                       itemBuilder: (context, index) {
@@ -431,7 +448,7 @@ class _MainPageState extends State<MainPage> {
                           ),
                           decoration: BoxDecoration(
                             color: isHighlighted
-                                ? const Color(0xFF128C7E).withOpacity(0.05)
+                                ? theme.colorScheme.primary.withOpacity(0.1)
                                 : Colors.transparent,
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -444,15 +461,16 @@ class _MainPageState extends State<MainPage> {
                               height: 38,
                               decoration: BoxDecoration(
                                 color: isHighlighted
-                                    ? const Color(0xFF128C7E)
-                                    : const Color(0xFF128C7E).withOpacity(0.1),
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.primary
+                                        .withOpacity(0.1),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
                                 _getPrayerIcon(prayer['name']!),
                                 color: isHighlighted
-                                    ? Colors.white
-                                    : const Color(0xFF128C7E),
+                                    ? theme.colorScheme.onPrimary
+                                    : theme.colorScheme.primary,
                                 size: 24,
                               ),
                             ),
@@ -464,8 +482,8 @@ class _MainPageState extends State<MainPage> {
                                     : FontWeight.normal,
                                 fontSize: isHighlighted ? 18 : 16,
                                 color: isHighlighted
-                                    ? const Color(0xFF128C7E)
-                                    : Colors.black87,
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.onSurface,
                               ),
                             ),
                             trailing: Row(
@@ -484,8 +502,8 @@ class _MainPageState extends State<MainPage> {
                                         : FontWeight.normal,
                                     fontSize: isHighlighted ? 18 : 16,
                                     color: isHighlighted
-                                        ? const Color(0xFF128C7E)
-                                        : Colors.black87,
+                                        ? theme.colorScheme.primary
+                                        : theme.colorScheme.onSurface,
                                   ),
                                 ),
                                 const SizedBox(width: 16),
@@ -501,8 +519,9 @@ class _MainPageState extends State<MainPage> {
                                         : Icons.notifications_none,
                                     color: notificationPreferences[
                                             prayer['name']!]!
-                                        ? const Color(0xFF128C7E)
-                                        : Colors.grey,
+                                        ? theme.colorScheme.primary
+                                        : theme.colorScheme.onSurface
+                                            .withOpacity(0.6),
                                   ),
                                 ),
                               ],
@@ -529,11 +548,12 @@ class _MainPageState extends State<MainPage> {
     final reciterProvider = Provider.of<ReciterProvider>(context);
     final languageProvider = Provider.of<LanguageProvider>(context);
     final translations = languageProvider.translations;
+    final theme = Theme.of(context);
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
       ),
       child: Column(
         children: [
@@ -541,14 +561,17 @@ class _MainPageState extends State<MainPage> {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.green, Colors.greenAccent],
+                colors: [
+                  theme.colorScheme.primary,
+                  theme.colorScheme.primary.withOpacity(0.7),
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.2),
+                  color: theme.colorScheme.shadow.withOpacity(0.2),
                   spreadRadius: 2,
                   blurRadius: 15,
                   offset: const Offset(0, 4),
@@ -581,7 +604,7 @@ class _MainPageState extends State<MainPage> {
                       style: GoogleFonts.nunito(
                         fontSize: 21,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white70,
+                        color: theme.colorScheme.onPrimary.withOpacity(0.8),
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -592,14 +615,15 @@ class _MainPageState extends State<MainPage> {
                             text: "${translations["nextPrayer"]}: ",
                             style: GoogleFonts.nunito(
                               fontSize: 18,
-                              color: Colors.black54,
+                              color:
+                                  theme.colorScheme.onSurface.withOpacity(0.6),
                             ),
                           ),
                           TextSpan(
                             text: nextPrayerName ?? 'None',
                             style: GoogleFonts.nunito(
                               fontSize: 22,
-                              color: Colors.black,
+                              color: theme.colorScheme.onSurface,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -611,17 +635,17 @@ class _MainPageState extends State<MainPage> {
                       "${translations["timeUntil"]}",
                       style: GoogleFonts.nunito(
                         fontSize: 18,
-                        color: Colors.black54,
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
                       ),
                     ),
                     Text(
                       timeUntilNextPrayer ?? 'None',
                       style: GoogleFonts.nunito(
                         fontSize: 20,
-                        color: Colors.black,
+                        color: theme.colorScheme.onSurface,
                         fontWeight: FontWeight.bold,
                       ),
-                    )
+                    ),
                   ],
                 );
               },
@@ -633,15 +657,18 @@ class _MainPageState extends State<MainPage> {
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Colors.green, Colors.greenAccent],
+                    gradient: LinearGradient(
+                      colors: [
+                        theme.colorScheme.primary,
+                        theme.colorScheme.primary.withOpacity(0.7),
+                      ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.grey.withOpacity(0.2),
+                        color: theme.colorScheme.shadow.withOpacity(0.2),
                         spreadRadius: 2,
                         blurRadius: 15,
                         offset: const Offset(0, 4),
@@ -649,8 +676,7 @@ class _MainPageState extends State<MainPage> {
                     ],
                   ),
                   child: Material(
-                    color: Colors
-                        .transparent, // Makes the Material widget transparent
+                    color: Colors.transparent,
                     child: InkWell(
                       onTap: () {
                         Navigator.of(context).push(
@@ -663,10 +689,10 @@ class _MainPageState extends State<MainPage> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         alignment: Alignment.center,
-                        child: const Icon(
+                        child: Icon(
                           Icons.settings,
                           size: 20,
-                          color: Colors.black87,
+                          color: theme.colorScheme.onPrimary.withOpacity(0.9),
                         ),
                       ),
                     ),
@@ -677,15 +703,18 @@ class _MainPageState extends State<MainPage> {
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Colors.green, Colors.greenAccent],
+                    gradient: LinearGradient(
+                      colors: [
+                        theme.colorScheme.primary,
+                        theme.colorScheme.primary.withOpacity(0.7),
+                      ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.grey.withOpacity(0.2),
+                        color: theme.colorScheme.shadow.withOpacity(0.2),
                         spreadRadius: 2,
                         blurRadius: 15,
                         offset: const Offset(0, 4),
@@ -708,7 +737,7 @@ class _MainPageState extends State<MainPage> {
                           style: GoogleFonts.nunito(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                            color: theme.colorScheme.onPrimary,
                             height: 1,
                           ),
                         ),
