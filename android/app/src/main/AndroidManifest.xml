@@ -14,7 +14,7 @@
 
     <application
         android:usesCleartextTraffic="true"
-        android:label="Younis Adhan"
+        android:label="Flutter Adhan"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <service

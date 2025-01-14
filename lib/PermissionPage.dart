@@ -1,6 +1,9 @@
 import 'package:awqatalsalah/LocationPickerScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
+
+import 'Services/provider.dart';
 
 void main() => runApp(const MyApp());
 
@@ -15,8 +18,6 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSwatch().copyWith(
           primary: Colors.blue,
           secondary: Colors.green,
-          background: Colors.blue.shade50,
-          onBackground: Colors.blue.shade900,
           surface: Colors.white,
           onSurface: Colors.blue.shade700,
           error: Colors.redAccent,
@@ -97,6 +98,8 @@ class PermissionPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    final translations = languageProvider.translations;
 
     return Scaffold(
       body: Container(
@@ -104,7 +107,7 @@ class PermissionPage extends StatelessWidget {
           gradient: LinearGradient(
             colors: [
               theme.colorScheme.primary.withOpacity(0.1),
-              theme.colorScheme.background,
+              theme.colorScheme.surface,
             ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -124,17 +127,17 @@ class PermissionPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'App Permissions Required',
+                  translations["appPermissionsRequired"]!,
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onBackground,
+                    color: theme.colorScheme.onSurface,
                   ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'To provide you with the best experience, we need the following permissions:',
+                  translations["permissionDescription"]!,
                   style: TextStyle(
                     fontSize: 16,
                     color: theme.colorScheme.onSurface.withOpacity(0.8),
@@ -145,15 +148,15 @@ class PermissionPage extends StatelessWidget {
                 ListTile(
                   leading:
                       Icon(Icons.location_on, color: theme.colorScheme.primary),
-                  title: const Text('Location Permission'),
-                  subtitle: const Text(
-                      'To access your location for accurate prayer times.'),
+                  title: Text(translations["locationPermission"]!),
+                  subtitle:
+                      Text(translations["locationPermissionDescription"]!),
                 ),
                 ListTile(
                   leading: Icon(Icons.notifications,
                       color: theme.colorScheme.primary),
-                  title: const Text('Notification Permission'),
-                  subtitle: const Text('To notify you about the prayer times.'),
+                  title: Text(translations["notiPermission"]!),
+                  subtitle: Text(translations["notiPermissionDescription"]!),
                 ),
                 const SizedBox(height: 40),
                 ElevatedButton(
@@ -166,7 +169,7 @@ class PermissionPage extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    'Grant Permissions',
+                    translations["grantPermissions"]!,
                     style: TextStyle(
                         fontSize: 18, color: theme.colorScheme.onPrimary),
                   ),

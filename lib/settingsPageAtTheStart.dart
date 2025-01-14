@@ -1,18 +1,17 @@
+import 'package:awqatalsalah/PermissionPage.dart';
 import 'package:awqatalsalah/Services/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
-import 'LocationPickerScreen.dart';
-
-class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+class SettingsPageAtTheStart extends StatefulWidget {
+  const SettingsPageAtTheStart({super.key});
 
   @override
-  State<SettingsPage> createState() => _SettingsPageState();
+  State<SettingsPageAtTheStart> createState() => _SettingsPageAtTheStartState();
 }
 
-class _SettingsPageState extends State<SettingsPage> {
+class _SettingsPageAtTheStartState extends State<SettingsPageAtTheStart> {
   @override
   Widget build(BuildContext context) {
     final methodProvider = Provider.of<MethodProvider>(context);
@@ -27,7 +26,7 @@ class _SettingsPageState extends State<SettingsPage> {
         backgroundColor: primaryColor,
         elevation: 0,
         title: Text(
-          translations["settingsPage"]!,
+          translations["initConfigurations"]!,
           style: GoogleFonts.dmSans(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -75,20 +74,6 @@ class _SettingsPageState extends State<SettingsPage> {
                   const SizedBox(height: 16),
                   _buildSettingCard(
                     context: context,
-                    icon: Icons.location_on,
-                    title: translations["goToLocationScreen"]!,
-                    value: translations["pickYourLocation"]!,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => const LocationPickerScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _buildSettingCard(
-                    context: context,
                     icon: Icons.color_lens,
                     title: translations["changeTheme"]!,
                     value: translations["clickHereToChangeThemeOfApp"]!,
@@ -97,100 +82,20 @@ class _SettingsPageState extends State<SettingsPage> {
                           context, themeProvider, languageProvider);
                     },
                   ),
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.yellow[50],
-                      border: Border.all(
-                        color: Colors.yellow[700]!,
-                        width: 1,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.warning_amber_rounded,
-                          color: Colors.yellow[800],
-                          size: 24,
+                  const SizedBox(height: 32),
+                  _buildSettingCard(
+                    context: context,
+                    icon: Icons.check,
+                    title: translations["continue"]!,
+                    value: translations["clickHereToProceed"]!,
+                    onTap: () {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (context) => const PermissionPage(),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            translations['settingsWarning'] ?? "",
-                            style: GoogleFonts.dmSans(
-                              fontSize: 14,
-                              color: Colors.yellow[900],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
-                  const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade50,
-                      border: Border.all(
-                        color: Colors.greenAccent.shade700,
-                        width: 1.5,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.green.shade100,
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.greenAccent.shade100,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.adb,
-                            color: Colors.green.shade700,
-                            size: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "لا تنسونا من دعواتكم",
-                                style: GoogleFonts.dmSans(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green.shade900,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                "Dont forget us in your prayers\n"
-                                "No nos olvides en tus oraciones\n"
-                                "LOVE: YOUNIS MOHAMED <3",
-                                style: GoogleFonts.dmSans(
-                                  fontSize: 14,
-                                  color: Colors.grey.shade800,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -281,139 +186,119 @@ Future<void> _showLanguageMethod(
   final theme = Theme.of(context);
   final translations = languageProvider.translations;
 
-  showGeneralDialog(
+  showDialog(
     context: context,
-    barrierDismissible: true,
-    barrierLabel: "Dismiss",
-    pageBuilder: (context, animation, secondaryAnimation) {
-      return Center(
-        child: FadeTransition(
-          opacity: animation,
-          child: AlertDialog(
-            backgroundColor: theme.colorScheme.surface,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
+    builder: (context) {
+      return AlertDialog(
+        backgroundColor: theme.colorScheme.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+        ),
+        title: Column(
+          children: [
+            Icon(
+              Icons.access_time_outlined,
+              size: 40,
+              color: theme.colorScheme.primary.withOpacity(0.8),
             ),
-            title: Column(
-              children: [
-                Icon(
-                  Icons.access_time_outlined,
-                  size: 40,
-                  color: theme.colorScheme.primary.withOpacity(0.8),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  translations["selectPreferredLanguage"]!,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  height: 2,
-                  width: 60,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(1),
-                  ),
-                ),
-              ],
+            const SizedBox(height: 12),
+            Text(
+              translations["selectPreferredLanguage"]!,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.primary,
+              ),
+              textAlign: TextAlign.center,
             ),
-            content: Container(
-              width: double.maxFinite,
-              constraints: const BoxConstraints(maxHeight: 400),
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: languageProvider.languages.length,
-                itemBuilder: (context, index) {
-                  final entry =
-                      languageProvider.languages.entries.elementAt(index);
-                  final isSelected =
-                      entry.key == languageProvider.selectedLanguage;
+            const SizedBox(height: 8),
+            Container(
+              height: 2,
+              width: 60,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(1),
+              ),
+            ),
+          ],
+        ),
+        content: Container(
+          width: double.maxFinite,
+          constraints: const BoxConstraints(maxHeight: 400),
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: languageProvider.languages.length,
+            itemBuilder: (context, index) {
+              final entry = languageProvider.languages.entries.elementAt(index);
+              final isSelected = entry.key == languageProvider.selectedLanguage;
 
-                  return Container(
-                    margin: const EdgeInsets.symmetric(vertical: 4),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? theme.colorScheme.primary.withOpacity(0.1)
-                          : theme.colorScheme.surface.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 4,
-                      ),
-                      leading: CircleAvatar(
-                        backgroundColor: isSelected
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.primary.withOpacity(0.1),
-                        child: Text(
-                          "${entry.key}",
-                          style: TextStyle(
-                            color: isSelected
-                                ? theme.colorScheme.onPrimary
-                                : theme.colorScheme.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      title: Text(
-                        translations[entry.value]!,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight:
-                              isSelected ? FontWeight.bold : FontWeight.w500,
-                          color: isSelected ? theme.colorScheme.primary : null,
-                        ),
-                      ),
-                      onTap: () async {
-                        await languageProvider.setLanguage(entry.key);
-                        Navigator.of(context).pop();
-                      },
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      trailing: isSelected
-                          ? Icon(Icons.check_circle,
-                              color: theme.colorScheme.primary)
-                          : null,
-                      hoverColor: theme.colorScheme.primary.withOpacity(0.05),
-                    ),
-                  );
-                },
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: Text(
-                  translations["cancel"]!,
-                  style: TextStyle(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w500,
-                  ),
+              return Container(
+                margin: const EdgeInsets.symmetric(vertical: 4),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? theme.colorScheme.primary.withOpacity(0.1)
+                      : theme.colorScheme.surface.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-              ),
-            ],
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
+                  leading: CircleAvatar(
+                    backgroundColor: isSelected
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.primary.withOpacity(0.1),
+                    child: Text(
+                      "${entry.key}",
+                      style: TextStyle(
+                        color: isSelected
+                            ? theme.colorScheme.onPrimary
+                            : theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  title: Text(
+                    translations[entry.value]!,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.w500,
+                      color: isSelected ? theme.colorScheme.primary : null,
+                    ),
+                  ),
+                  onTap: () async {
+                    await languageProvider.setLanguage(entry.key);
+                    Navigator.of(context).pop();
+                  },
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  trailing: isSelected
+                      ? Icon(Icons.check_circle,
+                          color: theme.colorScheme.primary)
+                      : null,
+                  hoverColor: theme.colorScheme.primary.withOpacity(0.05),
+                ),
+              );
+            },
           ),
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              translations["cancel"]!,
+              style: TextStyle(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       );
     },
-    transitionBuilder: (context, animation, secondaryAnimation, child) {
-      final curvedAnimation = CurvedAnimation(
-        parent: animation,
-        curve: Curves.easeInOut,
-      );
-      return ScaleTransition(
-        scale: curvedAnimation,
-        child: child,
-      );
-    },
-    transitionDuration: const Duration(milliseconds: 300),
   );
 }
 
@@ -422,11 +307,9 @@ Future<void> _showMethodDialog(BuildContext context,
   final theme = Theme.of(context);
   final translations = languageProvider.translations;
 
-  showGeneralDialog(
+  showDialog(
     context: context,
-    barrierDismissible: true,
-    barrierLabel: "Dismiss",
-    pageBuilder: (context, animation, secondaryAnimation) {
+    builder: (context) {
       return AlertDialog(
         backgroundColor: theme.colorScheme.surface,
         shape: RoundedRectangleBorder(
@@ -537,17 +420,6 @@ Future<void> _showMethodDialog(BuildContext context,
         ],
       );
     },
-    transitionBuilder: (context, animation, secondaryAnimation, child) {
-      final curvedAnimation = CurvedAnimation(
-        parent: animation,
-        curve: Curves.easeInOut,
-      );
-      return ScaleTransition(
-        scale: curvedAnimation,
-        child: child,
-      );
-    },
-    transitionDuration: const Duration(milliseconds: 300),
   );
 }
 
@@ -556,11 +428,9 @@ Future<void> _showThemeDialog(BuildContext context, ThemeProvider themeProvider,
   final theme = Theme.of(context);
   final translations = languageProvider.translations;
 
-  showGeneralDialog(
+  showDialog(
     context: context,
-    barrierDismissible: true,
-    barrierLabel: "Dismiss",
-    pageBuilder: (context, animation, secondaryAnimation) {
+    builder: (context) {
       return AlertDialog(
         backgroundColor: theme.colorScheme.surface,
         shape: RoundedRectangleBorder(
@@ -575,7 +445,7 @@ Future<void> _showThemeDialog(BuildContext context, ThemeProvider themeProvider,
             ),
             const SizedBox(height: 12),
             Text(
-              "Choose your theme",
+              translations["chooseYourTheme"]!,
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -650,7 +520,7 @@ Future<void> _showThemeDialog(BuildContext context, ThemeProvider themeProvider,
                     ),
                   ),
                   title: Text(
-                    entry.key,
+                    translations[entry.key]!,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight:
@@ -695,16 +565,5 @@ Future<void> _showThemeDialog(BuildContext context, ThemeProvider themeProvider,
         ],
       );
     },
-    transitionBuilder: (context, animation, secondaryAnimation, child) {
-      final curvedAnimation = CurvedAnimation(
-        parent: animation,
-        curve: Curves.easeInOut,
-      );
-      return ScaleTransition(
-        scale: curvedAnimation,
-        child: child,
-      );
-    },
-    transitionDuration: const Duration(milliseconds: 300),
   );
 }

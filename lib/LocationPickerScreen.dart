@@ -21,6 +21,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   String lon = "";
   String address = "";
   bool latlonSet = false;
+  bool addressSet = false;
   bool isLoading = false;
   String locationMessage = "";
   late Future<void> _futureSetLatLon;
@@ -117,11 +118,13 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
           address =
               "${place.street}, ${place.locality}, ${place.administrativeArea}, ${place.country}";
           isLoading = false;
+          addressSet = true;
         });
       }
     } catch (e) {
       setState(() {
-        address = "Address Not Set Yet";
+        addressSet = false;
+        address = "TURN ON THE INTERNET";
         isLoading = false;
       });
     }
@@ -274,7 +277,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                       ),
                     ],
                     const Spacer(),
-                    if (latlonSet && !isLoading)
+                    if (latlonSet && !isLoading && addressSet)
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: theme.colorScheme.primary,

@@ -1,11 +1,12 @@
-import 'package:awqatalsalah/LocationPickerScreen.dart';
-import 'package:awqatalsalah/MainPage.dart';
-import 'package:awqatalsalah/PermissionPage.dart';
+import 'package:awqatalsalah/settingsPageAtTheStart.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'LocationPickerScreen.dart';
+import 'MainPage.dart';
+
 class AppRouter extends StatefulWidget {
-  AppRouter({super.key});
+  const AppRouter({super.key});
 
   @override
   State<AppRouter> createState() => _AppRouterState();
@@ -63,12 +64,12 @@ class _AppRouterState extends State<AppRouter> {
               );
             }
             if (_isFirstLaunch) {
-              return PermissionPage();
+              return const SettingsPageAtTheStart();
             }
             if (latlonSet) {
-              return MainPage();
+              return const MainPage();
             }
-            return LocationPickerScreen();
+            return const LocationPickerScreen();
           }),
     );
   }

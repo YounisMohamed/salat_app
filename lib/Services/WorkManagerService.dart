@@ -85,7 +85,7 @@ void callbackDispatcher() {
 
 Future<void> fetchPrayerTimesFromApi(String lat, String lon, int method,
     int reciter, Map<String, bool> notificationPreferences) async {
-  final api _api = api();
+  final Api api = Api();
   final now = DateTime.now();
   String day = now.day < 10 ? "0${now.day}" : "${now.day}";
   String month = now.month < 10 ? "0${now.month}" : "${now.month}";
@@ -94,17 +94,16 @@ Future<void> fetchPrayerTimesFromApi(String lat, String lon, int method,
   try {
     print("[WorkManager] Starting API fetch...");
     final response =
-        await _api.getTimings(date: date, lat: lat, lon: lon, method: method);
-
-    if (response.timings == null) {
-      throw Exception("Timings data is null");
+        await api.getTimings(date: date, lat: lat, lon: lon, method: method);
+    if (!response.isSuccess) {
+      throw Exception("API CALL FAILED FROM WM");
     }
 
     print("[WorkManager] Response validation successful");
     tz.initializeTimeZones();
     await NotificationService.init("Work Manager");
 
-    final timings = response.timings;
+    final timings = response.data!.timings;
     final Map<String, String> prayerTimes = {
       "Fajr": timings.fajr,
       "Shuruq": timings.sunrise,
@@ -201,6 +200,7 @@ Future<void> fetchPrayerTimesFromApi(String lat, String lon, int method,
   } catch (e, stackTrace) {
     print("[WorkManager] Critical error in fetchPrayerTimesFromApi:");
     print("[WorkManager] Error: $e");
+    print("[WorkManager] StackTrace: $stackTrace");
     rethrow;
   }
 }

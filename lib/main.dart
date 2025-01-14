@@ -43,7 +43,7 @@ class MyApp extends StatelessWidget {
           textDirection: languageProvider.selectedLanguage == 2
               ? TextDirection.rtl
               : TextDirection.ltr,
-          child: AppRouter()),
+          child: const AppRouter()),
     );
   }
 }

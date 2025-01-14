@@ -117,14 +117,14 @@ class _MainPageState extends State<MainPage> {
           }
 
           String hour = parsedTime.hour < 9
-              ? "0" + parsedTime.hour.toString()
+              ? "0${parsedTime.hour}"
               : parsedTime.hour.toString();
           String minute = parsedTime.minute < 9
-              ? "0" + parsedTime.minute.toString()
+              ? "0${parsedTime.minute}"
               : parsedTime.minute.toString();
 
           if (languageProvider.selectedLanguage == 2) {
-            String bodyArabic = "($hour:$minute)" + " حان وقت الصلاة";
+            String bodyArabic = "($hour:$minute)" " حان وقت الصلاة";
             await NotificationService.scheduleNotification(
                 id: prayerName.hashCode,
                 title: "$prayerName Prayer",
@@ -140,7 +140,7 @@ class _MainPageState extends State<MainPage> {
                 soundNumber: reciterProvider.selectedReciter);
           }
 
-          print("scheduled time ${scheduledTime} for prayer ${prayerName}");
+          print("scheduled time $scheduledTime for prayer $prayerName");
         } catch (e) {
           print("Error scheduling notification for $prayerName: $e");
         }
@@ -171,7 +171,7 @@ class _MainPageState extends State<MainPage> {
     print("SET LAT LON ON MAIN PAGE");
   }
 
-  final api _api = api();
+  final Api _api = Api();
   AdhanResponse? _prayerData;
 
   Future<void> fetchPrayerTimesFromApi(SharedPreferences prefs) async {
@@ -198,21 +198,24 @@ class _MainPageState extends State<MainPage> {
           lat: lat,
           lon: lon,
           method: methodProvider.selectedMethod);
+      if (!response.isSuccess) {
+        throw Exception("API CALL FAILED FROM WM");
+      }
 
       setState(() {
-        _prayerData = response;
+        _prayerData = response.data;
       });
 
-      cachePrayerTimes(response, prefs, now);
+      cachePrayerTimes(response.data, prefs, now);
     } catch (e) {
       print('Error fetching prayer times from API: $e');
     }
   }
 
   Future<void> cachePrayerTimes(
-      AdhanResponse response, SharedPreferences prefs, DateTime now) async {
+      AdhanResponse? response, SharedPreferences prefs, DateTime now) async {
     try {
-      prefs.setString('fajr', response.timings.fajr);
+      prefs.setString('fajr', response!.timings.fajr);
       prefs.setString('sunrise', response.timings.sunrise);
       prefs.setString('dhuhr', response.timings.dhuhr);
       prefs.setString('asr', response.timings.asr);
@@ -314,7 +317,7 @@ class _MainPageState extends State<MainPage> {
 
     return Scaffold(
       backgroundColor:
-          theme.colorScheme.background.withOpacity(0.1), // Light gradient
+          theme.colorScheme.surface.withOpacity(0.1), // Light gradient
       appBar: AppBar(
         elevation: 0,
         backgroundColor: theme.primaryColor, // Use theme primary color
@@ -760,105 +763,124 @@ class _MainPageState extends State<MainPage> {
     final theme = Theme.of(context);
     final translations = languageProvider.translations;
 
-    showDialog(
+    showGeneralDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-          title: Column(
-            children: [
-              Icon(
-                Icons.mic_rounded,
-                size: 40,
-                color: theme.primaryColor.withOpacity(0.8),
+      barrierDismissible: true,
+      barrierLabel: "Dismiss",
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return Center(
+          child: FadeTransition(
+            opacity: animation,
+            child: AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
               ),
-              const SizedBox(height: 12),
-              Text(
-                translations["selectAReciter"]!,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: theme.primaryColor,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Container(
-                height: 2,
-                width: 60,
-                decoration: BoxDecoration(
-                  color: theme.primaryColor.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(1),
-                ),
-              ),
-            ],
-          ),
-          content: Container(
-            width: double.maxFinite,
-            constraints: const BoxConstraints(maxHeight: 400),
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: reciterProvider.reciters.length,
-              itemBuilder: (context, index) {
-                final entry = reciterProvider.reciters.entries.elementAt(index);
-                return Container(
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.05),
-                    borderRadius: BorderRadius.circular(8),
+              title: Column(
+                children: [
+                  Icon(
+                    Icons.mic_rounded,
+                    size: 40,
+                    color: theme.primaryColor.withOpacity(0.8),
                   ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 4,
+                  const SizedBox(height: 12),
+                  Text(
+                    translations["selectAReciter"]!,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: theme.primaryColor,
                     ),
-                    leading: CircleAvatar(
-                      backgroundColor: theme.primaryColor.withOpacity(0.1),
-                      child: Text(
-                        "${entry.key}",
-                        style: TextStyle(
-                          color: theme.primaryColor,
-                          fontWeight: FontWeight.bold,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    height: 2,
+                    width: 60,
+                    decoration: BoxDecoration(
+                      color: theme.primaryColor.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(1),
+                    ),
+                  ),
+                ],
+              ),
+              content: Container(
+                width: double.maxFinite,
+                constraints: const BoxConstraints(maxHeight: 400),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: reciterProvider.reciters.length,
+                  itemBuilder: (context, index) {
+                    final entry =
+                        reciterProvider.reciters.entries.elementAt(index);
+                    return Container(
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
                         ),
+                        leading: CircleAvatar(
+                          backgroundColor: theme.primaryColor.withOpacity(0.1),
+                          child: Text(
+                            "${entry.key}",
+                            style: TextStyle(
+                              color: theme.primaryColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        title: Text(
+                          translations[entry.value]!,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        onTap: () async {
+                          await reciterProvider.setReciter(entry.key);
+                          Navigator.of(context).pop();
+                        },
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        hoverColor: theme.primaryColor.withOpacity(0.05),
                       ),
-                    ),
-                    title: Text(
-                      translations[entry.value]!,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    onTap: () async {
-                      await reciterProvider.setReciter(entry.key);
-                      Navigator.of(context).pop();
-                    },
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    hoverColor: theme.primaryColor.withOpacity(0.05),
-                  ),
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                translations["cancel"]!,
-                style: TextStyle(
-                  color: theme.primaryColor,
-                  fontWeight: FontWeight.w500,
+                    );
+                  },
                 ),
               ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(
+                    translations["cancel"]!,
+                    style: TextStyle(
+                      color: theme.primaryColor,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curvedAnimation = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeInOutSine,
+        );
+        return ScaleTransition(
+          scale: curvedAnimation,
+          child: child,
+        );
+      },
+      transitionDuration: const Duration(milliseconds: 400),
     );
   }
 
