@@ -7,7 +7,7 @@ import 'api.dart';
 import 'notification_service.dart';
 
 class WorkManagerService {
-  static const String TEST_NOTIFICATION_TASK = 'periodic_task_take_6';
+  static const String TEST_NOTIFICATION_TASK = 'periodic_task_take_7';
   static const Duration REFRESH_INTERVAL = Duration(hours: 4);
 
   static Future<void> init() async {

@@ -6,16 +6,20 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
 
   static Map<int, Map<String, String>> channels = {
-    1: {"channelId": "adhan_1", "channelName": "1", "soundFile": "adhan_1"},
-    2: {"channelId": "adhan_2", "channelName": "2", "soundFile": "adhan_2"},
-    3: {"channelId": "adhan_3", "channelName": "3", "soundFile": "adhan_3"},
-    4: {"channelId": "adhan_4", "channelName": "4", "soundFile": "adhan_4"},
-    5: {"channelId": "adhan_5", "channelName": "5", "soundFile": "adhan_5"},
-    6: {"channelId": "adhan_6", "channelName": "6", "soundFile": "adhan_6"},
-    7: {"channelId": "adhan_7", "channelName": "7", "soundFile": "adhan_7"},
-    8: {"channelId": "adhan_8", "channelName": "8", "soundFile": "adhan_8"},
-    9: {"channelId": "adhan_9", "channelName": "9", "soundFile": "adhan_9"},
-    10: {"channelId": "adhan_10", "channelName": "10", "soundFile": "adhan_10"},
+    1: {"channelId": "_adhan_1", "channelName": "1", "soundFile": "adhan_1"},
+    2: {"channelId": "_adhan_2", "channelName": "2", "soundFile": "adhan_2"},
+    3: {"channelId": "_adhan_3", "channelName": "3", "soundFile": "adhan_3"},
+    4: {"channelId": "_adhan_4", "channelName": "4", "soundFile": "adhan_4"},
+    5: {"channelId": "_adhan_5", "channelName": "5", "soundFile": "adhan_5"},
+    6: {"channelId": "_adhan_6", "channelName": "6", "soundFile": "adhan_6"},
+    7: {"channelId": "_adhan_7", "channelName": "7", "soundFile": "adhan_7"},
+    8: {"channelId": "_adhan_8", "channelName": "8", "soundFile": "adhan_8"},
+    9: {"channelId": "_adhan_9", "channelName": "9", "soundFile": "adhan_9"},
+    10: {
+      "channelId": "_adhan_10",
+      "channelName": "10",
+      "soundFile": "adhan_10"
+    },
   };
 
   static Future<void> init(String context) async {
